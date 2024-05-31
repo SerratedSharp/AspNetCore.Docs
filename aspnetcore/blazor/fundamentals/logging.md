@@ -704,7 +704,7 @@ Blazor Web App:
   Blazor.start({
     circuit: {
       configureSignalR: function (builder) {
-        builder.configureLogging("information");
+        builder.configureLogging(2); // LogLevel.Information
       }
     }
   });
@@ -720,13 +720,16 @@ Blazor Server:
 <script>
   Blazor.start({
     configureSignalR: function (builder) {
-      builder.configureLogging(2);
+      builder.configureLogging(2); // LogLevel.Information
     }
   });
 </script>
 ```
 
 In the preceding example, the `{BLAZOR SCRIPT}` placeholder is the Blazor script path and file name. For the location of the script, see <xref:blazor/project-structure#location-of-the-blazor-script>.
+
+> [!NOTE]
+> Using an integer to specify the logging level in Example 2, often referred to as a *magic number* or *magic constant*, is considered a poor coding practice because the integer doesn't clearly identify the logging level when viewing the source code. If minimizing the bytes transferred to the browser is a priority, using an integer might be justified (consider removing the comment in such cases).
 
 For more information on Blazor startup (`Blazor.start()`), see <xref:blazor/fundamentals/startup>.
 
@@ -772,7 +775,7 @@ Provide a `Logging:LogLevel:HubConnection` app setting in the default `appsettin
 
 At the top of the Razor component file (`.razor`):
 
-* Inject an <xref:Microsoft.Extensions.Logging.ILoggerProvider> to add a `WebAssemblyConsoleLogger` to the logging providers passed to <xref:Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilder>. Unlike a traditional <xref:Microsoft.Extensions.Logging.Console.ConsoleLogger>, `WebAssemblyConsoleLogger` is a wrapper around browser-specific logging APIs (for example, `console.log`). Use of `WebAssemblyConsoleLogger` makes logging possible within Mono inside a browser context.
+* Inject an <xref:Microsoft.Extensions.Logging.ILoggerProvider> to add a `WebAssemblyConsoleLogger` to the logging providers passed to <xref:Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilder>. Unlike a <xref:Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider>, `WebAssemblyConsoleLogger` is a wrapper around browser-specific logging APIs (for example, `console.log`). Use of `WebAssemblyConsoleLogger` makes logging possible within Mono inside a browser context.
 * Inject an `IConfiguration` to read the `Logging:LogLevel:HubConnection` app setting.
 
 > [!NOTE]

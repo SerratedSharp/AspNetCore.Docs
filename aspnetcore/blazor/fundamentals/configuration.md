@@ -16,7 +16,22 @@ This article explains how to configure Blazor apps, including app settings, auth
 
 :::moniker range=">= aspnetcore-8.0"
 
-This guidance applies to Interactive WebAssembly rendering in a Blazor Web App or a Blazor WebAssembly app.
+This guidance applies to client-side project configuration in a Blazor Web App or a standalone Blazor WebAssembly app.
+
+In Blazor Web Apps:
+
+* For server-side configuration:
+  * See <xref:fundamentals/configuration/index> for guidance.
+  * Only configuration in the project's root app settings files are loaded by default.
+  * The remainder of this article only applies to client-side configuration in the `.Client` project. 
+* For client-side configuration (`.Client` project), configuration is loaded from the following app settings files by default:
+  * `wwwroot/appsettings.json`.
+  * `wwwroot/appsettings.{ENVIRONMENT}.json`, where the `{ENVIRONMENT}` placeholder is the app's [runtime environment](xref:fundamentals/environments).
+
+In standalone Blazor WebAssembly apps, configuration is loaded from the following app settings files by default:
+
+* `wwwroot/appsettings.json`.
+* `wwwroot/appsettings.{ENVIRONMENT}.json`, where the `{ENVIRONMENT}` placeholder is the app's [runtime environment](xref:fundamentals/environments).
 
 :::moniker-end
 
@@ -24,14 +39,14 @@ This guidance applies to Interactive WebAssembly rendering in a Blazor Web App o
 
 This guidance applies to the **`Client`** project of a hosted Blazor WebAssembly solution or a Blazor WebAssembly app.
 
-:::moniker-end
-
-For server-side ASP.NET Core app configuration, see <xref:fundamentals/configuration/index>.
+For server-side ASP.NET Core app configuration in the **`Server`** project of a hosted Blazor WebAssembly solution, see <xref:fundamentals/configuration/index>.
 
 On the client, configuration is loaded from the following app settings files by default:
 
 * `wwwroot/appsettings.json`.
 * `wwwroot/appsettings.{ENVIRONMENT}.json`, where the `{ENVIRONMENT}` placeholder is the app's [runtime environment](xref:fundamentals/environments).
+
+:::moniker-end
 
 > [!NOTE]
 > Logging configuration placed into an app settings file in `wwwroot` isn't loaded by default. For more information, see the [Logging configuration](#logging-configuration) section later in this article.
@@ -46,7 +61,7 @@ Other configuration providers registered by the app can also provide configurati
 For more information on configuration providers, see <xref:fundamentals/configuration/index>.
 
 > [!WARNING]
-> Configuration and settings files are visible to users on the client, and users can tamper with the data. **Don't store app secrets, credentials, or any other sensitive data in the app's configuration or files.**
+> Configuration and settings files in the web root (`wwwroot` folder) are visible to users on the client, and users can tamper with the data. **Don't store app secrets, credentials, or any other sensitive data in any web root file.**
 
 ## App settings configuration
 
@@ -97,7 +112,7 @@ Inject an <xref:Microsoft.Extensions.Configuration.IConfiguration> instance into
 Client security restrictions prevent direct access to files via user code, including settings files for app configuration. To read configuration files in addition to `appsettings.json`/`appsettings.{ENVIRONMENT}.json` from the `wwwroot` folder into configuration, use an <xref:System.Net.Http.HttpClient>.
 
 > [!WARNING]
-> Configuration and settings files are visible to users on the client, and users can tamper with the data. **Don't store app secrets, credentials, or any other sensitive data in the app's configuration or files.**
+> Configuration and settings files in the web root (`wwwroot` folder) are visible to users on the client, and users can tamper with the data. **Don't store app secrets, credentials, or any other sensitive data in any web root file.**
 
 The following example reads a configuration file (`cars.json`) into the app's configuration.
 
@@ -210,7 +225,7 @@ Obtain a section of the configuration in C# code with <xref:Microsoft.Extensions
 
 ## Authentication configuration
 
-Provide authentication configuration in an app settings file.
+Provide ***public*** authentication configuration in an app settings file.
 
 `wwwroot/appsettings.json`:
 
@@ -229,6 +244,9 @@ Load the configuration for an Identity provider with <xref:Microsoft.Extensions.
 builder.Services.AddOidcAuthentication(options =>
     builder.Configuration.Bind("Local", options.ProviderOptions));
 ```
+
+> [!WARNING]
+> Configuration and settings files in the web root (`wwwroot` folder) are visible to users on the client, and users can tamper with the data. **Don't store app secrets, credentials, or any other sensitive data in any web root file.**
 
 ## Logging configuration
 

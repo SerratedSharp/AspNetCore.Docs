@@ -628,15 +628,17 @@ When the button is selected in the `ChildComponent`:
 
 Use <xref:Microsoft.AspNetCore.Components.EventCallback> and <xref:Microsoft.AspNetCore.Components.EventCallback%601> for event handling and binding component parameters.
 
-Prefer the strongly typed <xref:Microsoft.AspNetCore.Components.EventCallback%601> over <xref:Microsoft.AspNetCore.Components.EventCallback>. <xref:Microsoft.AspNetCore.Components.EventCallback%601> provides enhanced error feedback to users of the component. Similar to other UI event handlers, specifying the event parameter is optional. Use <xref:Microsoft.AspNetCore.Components.EventCallback> when there's no value passed to the callback.
+Prefer the strongly typed <xref:Microsoft.AspNetCore.Components.EventCallback%601> over <xref:Microsoft.AspNetCore.Components.EventCallback>. <xref:Microsoft.AspNetCore.Components.EventCallback%601> provides enhanced error feedback when an inappropriate type is used, guiding users of the component towards correct implementation. Similar to other UI event handlers, specifying the event parameter is optional. Use <xref:Microsoft.AspNetCore.Components.EventCallback> when there's no value passed to the callback.
 
 <xref:Microsoft.AspNetCore.Components.EventCallback> and <xref:Microsoft.AspNetCore.Components.EventCallback%601> permit asynchronous delegates. <xref:Microsoft.AspNetCore.Components.EventCallback> is weakly typed and allows passing any type argument in `InvokeAsync(Object)`. <xref:Microsoft.AspNetCore.Components.EventCallback%601> is strongly typed and requires passing a `T` argument in `InvokeAsync(T)` that's assignable to `TValue`.
 
 Invoke an <xref:Microsoft.AspNetCore.Components.EventCallback> or <xref:Microsoft.AspNetCore.Components.EventCallback%601> with <xref:Microsoft.AspNetCore.Components.EventCallback.InvokeAsync%2A> and await the <xref:System.Threading.Tasks.Task>:
 
 ```csharp
-await OnClickCallback.InvokeAsync();
+await OnClickCallback.InvokeAsync({ARGUMENT});
 ```
+
+In the preceding example, the `{ARGUMENT}` placeholder is an optional argument.
 
 The following parent-child example demonstrates the technique.
 
@@ -663,16 +665,28 @@ The following parent-child example demonstrates the technique.
 ```razor
 @page "/parent-child-2"
 
-<Child2 OnClickCallback="@(async (value) => { await Task.Yield(); messageText = value; })" />
+<PageTitle>Parent Child 2</PageTitle>
 
-<p>
-    @messageText
-</p>
+<h1>Parent Child 2 Example</h1>
+
+<div>
+    <Child2 OnClickCallback="(value) => { message1 = value; }" />
+    @message1
+</div>
+
+<div>
+    <Child2 OnClickCallback=
+        "async (value) => { await Task.Delay(2000); message2 = value; }" /> 
+    @message2
+</div>
 
 @code {
-    private string messageText = string.Empty;
+    private string message1 = string.Empty;
+    private string message2 = string.Empty;
 }
 ```
+
+The second occurrence of the `Child2` component demonstrates an asynchronous callback, and the new `message2` value is assigned and rendered with a delay of two seconds.
 
 ## Prevent default actions
 

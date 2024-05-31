@@ -4,7 +4,7 @@ author: tdykstra
 description: Learn how to require HTTPS/TLS in an ASP.NET Core web app.
 ms.author: riande
 monikerRange: '>= aspnetcore-3.0'
-ms.custom: mvc
+ms.custom: mvc, linux-related-content
 ms.date: 2/14/2023
 uid: security/enforcing-ssl
 ---
@@ -187,7 +187,7 @@ Uncheck the **Configure for HTTPS** checkbox.
 
 ![New ASP.NET Core Web Application dialog showing the Configure for HTTPS checkbox unselected.](enforcing-ssl/_static/out-vs2019.png)
 
-# [.NET Core CLI](#tab/netcore-cli) 
+# [.NET CLI](#tab/net-cli) 
 
 Use the `--no-https` option. For example
 
@@ -280,6 +280,19 @@ See [this GitHub issue](https://github.com/dotnet/AspNetCore.Docs/issues/6199).
 ## Trust HTTPS certificate on Linux
 
 Establishing trust is distribution and browser specific. The following sections provide instructions for some popular distributions and the Chromium browsers (Edge and Chrome) and for Firefox.
+
+### Trust HTTPS certificate on Linux with linux-dev-certs
+
+[linux-dev-certs](https://github.com/tmds/linux-dev-certs) is an open-source, community-supported, .NET global tool that provides a convenient way to create and trust a developer certificate on Linux. The tool is not maintained or supported by Microsoft.
+
+The following commands install the tool and create a trusted developer certificate:
+
+```cli
+dotnet tool update -g linux-dev-certs
+dotnet linux-dev-certs install
+```
+
+For more information or to report issues, see the [linux-dev-certs GitHub repository](https://github.com/tmds/linux-dev-certs).
 
 ### Ubuntu trust the certificate for service-to-service communication
 
@@ -850,7 +863,7 @@ Uncheck the **Configure for HTTPS** checkbox.
 
 ![New ASP.NET Core Web Application dialog showing the Configure for HTTPS checkbox unselected.](enforcing-ssl/_static/out-vs2019.png)
 
-# [.NET Core CLI](#tab/netcore-cli) 
+# [.NET CLI](#tab/net-cli) 
 
 Use the `--no-https` option. For example
 

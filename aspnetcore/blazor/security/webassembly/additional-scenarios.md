@@ -574,6 +574,9 @@ builder.Services.AddMsalAuthentication(options =>
 
 The `{CUSTOM SCOPE 1}` and `{CUSTOM SCOPE 2}` placeholders in the preceding example are custom scopes.
 
+> [!NOTE]
+> <xref:Microsoft.Authentication.WebAssembly.Msal.Models.MsalProviderOptions.AdditionalScopesToConsent%2A> isn't able to provision delegated user permissions for Microsoft Graph via the Microsoft Entra ID consent UI when a user first uses an app registered in Microsoft Azure. For more information, see <xref:blazor/security/webassembly/graph-api?pivots=graph-sdk-5#defaultaccesstokenscopes-versus-additionalscopestoconsent>.
+
 The <xref:Microsoft.AspNetCore.Components.WebAssembly.Authentication.IAccessTokenProvider.RequestAccessToken%2A?displayProperty=nameWithType> method provides an overload that allows an app to provision an access token with a given set of scopes.
 
 In a Razor component:
@@ -1767,4 +1770,5 @@ The preceding example sets redirect URIs with regular string literals. The follo
 ## Additional resources
 
 * <xref:blazor/security/webassembly/graph-api>
-* [`HttpClient` and `HttpRequestMessage` with Fetch API request options](xref:blazor/call-web-api#httpclient-and-httprequestmessage-with-fetch-api-request-options)
+* [Cookie-based request credentials (*Call web API* article)](xref:blazor/call-web-api#cookie-based-request-credentials)
+* [`HttpClient` and `HttpRequestMessage` with Fetch API request options (*Call web API* article)](xref:blazor/call-web-api#httpclient-and-httprequestmessage-with-fetch-api-request-options)

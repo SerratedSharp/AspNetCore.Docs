@@ -47,7 +47,7 @@ Use the **Razor Class Library** project template.
 > [!NOTE]
 > Do ***not*** select the **Support pages and views** checkbox. Selecting the checkbox results in a class library that only supports server-side apps.
 
-# [Visual Studio Code / .NET Core CLI](#tab/visual-studio-code+netcore-cli)
+# [Visual Studio Code / .NET CLI](#tab/visual-studio-code+net-cli)
 
 Run the following command in the integrated terminal (VS Code) or a command shell (.NET CLI):
 
@@ -90,7 +90,7 @@ Class libraries are rarely built to only support server-side apps. If the class 
   dotnet new razorclasslib -s
   ```
 
-* Only provide a framework reference to ASP.NET Core in the library's project file in addition to any other required MS Build properties:
+* Only provide a framework reference to ASP.NET Core in the library's project file in addition to any other required MSBuild properties:
 
   ```xml
   <ItemGroup>
@@ -125,7 +125,7 @@ The **Razor Class Library** project template satisfies the preceding requirement
 
 Use the **Razor Class Library** project template. The template's **Support pages and views** checkbox should be selected.
 
-# [Visual Studio Code / .NET Core CLI](#tab/visual-studio-code+netcore-cli)
+# [Visual Studio Code / .NET CLI](#tab/visual-studio-code+net-cli)
 
 Run the following command in the integrated terminal (VS Code) or a command shell (.NET CLI):
 

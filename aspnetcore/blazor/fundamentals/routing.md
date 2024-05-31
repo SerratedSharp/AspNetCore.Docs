@@ -132,12 +132,6 @@ When the <xref:Microsoft.AspNetCore.Components.Routing.Router> component navigat
 
 ## Provide custom content when content isn't found
 
-:::moniker range=">= aspnetcore-8.0"
-
-*This section only applies to Blazor WebAssembly apps.* Blazor Web Apps don't use the <xref:Microsoft.AspNetCore.Components.Routing.Router.NotFound> parameter (`<NotFound>...</NotFound>` markup), but the parameter is supported for backward compatibility to avoid a breaking change in the framework. Blazor Web Apps typically process bad URL requests by either displaying the browser's built-in 404 UI or returning a custom 404 page from the ASP.NET Core server via ASP.NET Core middleware (for example, [`UseStatusCodePagesWithRedirects`](xref:fundamentals/error-handling#usestatuscodepageswithredirects) / [API documentation](xref:Microsoft.AspNetCore.Builder.StatusCodePagesExtensions.UseStatusCodePagesWithRedirects%2A)).
-
-:::moniker-end
-
 The <xref:Microsoft.AspNetCore.Components.Routing.Router> component allows the app to specify custom content if content isn't found for the requested route.
 
 Set custom content for the <xref:Microsoft.AspNetCore.Components.Routing.Router> component's <xref:Microsoft.AspNetCore.Components.Routing.Router.NotFound> parameter:
@@ -152,6 +146,13 @@ Set custom content for the <xref:Microsoft.AspNetCore.Components.Routing.Router>
 ```
 
 Arbitrary items are supported as content of the <xref:Microsoft.AspNetCore.Components.Routing.Router.NotFound> parameter, such as other interactive components. To apply a default layout to <xref:Microsoft.AspNetCore.Components.Routing.Router.NotFound> content, see <xref:blazor/components/layouts#apply-a-layout-to-arbitrary-content-layoutview-component>.
+
+:::moniker range=">= aspnetcore-8.0"
+
+> [!IMPORTANT]
+> Blazor Web Apps don't use the <xref:Microsoft.AspNetCore.Components.Routing.Router.NotFound> parameter (`<NotFound>...</NotFound>` markup), but the parameter is supported for backward compatibility to avoid a breaking change in the framework. The server-side ASP.NET Core middleware pipeline processes requests on the server. Use server-side techniques to handle bad requests. For more information, see <xref:blazor/components/render-modes#static-server-side-rendering-static-ssr>.
+
+:::moniker-end
 
 ## Route to components from multiple assemblies
 
@@ -636,15 +637,15 @@ For more information on component disposal, see <xref:blazor/components/lifecycl
 Blazor Web Apps are capable of two types of routing for page navigation and form handling requests:
 
 * Normal navigation (cross-document navigation): a full-page reload is triggered for the request URL.
-* Enhanced navigation (same-document navigation)&dagger;: Blazor intercepts the request and performs a `fetch` request instead. Blazor then patches the response content into the page's DOM. Blazor's enhanced navigation and form handling avoid the need for a full-page reload and preserves more of the page state, so pages load faster, usually without losing the user's scroll position on the page.
+* Enhanced navigation (same-document navigation): Blazor intercepts the request and performs a `fetch` request instead. Blazor then patches the response content into the page's DOM. Blazor's enhanced navigation and form handling avoid the need for a full-page reload and preserves more of the page state, so pages load faster, usually without losing the user's scroll position on the page.
 
-&dagger;Enhanced navigation is available when:
+Enhanced navigation is available when:
 
 * The Blazor Web App script (`blazor.web.js`) is used, not the Blazor Server script (`blazor.server.js`) or Blazor WebAssembly script (`blazor.webassembly.js`).
 * The feature isn't [explicitly disabled](xref:blazor/fundamentals/startup#disable-enhanced-navigation-and-form-handling).
 * The destination URL is within the internal base URI space (the app's base path).
 
-If server-side routing and enhanced navigation are enabled, [location changing handlers](#location-changes) are only invoked for programmatic navigation initiated from an interactive runtime. In future releases, additional types of navigation, such as link clicks, may also invoke location changing handlers.
+If server-side routing and enhanced navigation are enabled, [location changing handlers](#location-changes) are only invoked for programmatic navigation initiated from an interactive runtime. In future releases, additional types of navigation, such as following a link, may also invoke location changing handlers.
 
 When an enhanced navigation occurs, [`LocationChanged` event handlers](#location-changes) registered with Interactive Server and WebAssembly runtimes are typically invoked. There are cases when location changing handlers might not intercept an enhanced navigation. For example, the user might switch to another page before an interactive runtime becomes available. Therefore, it's important that app logic not rely on invoking a location changing handler, as there's no guarantee of the handler executing.
 
@@ -1008,6 +1009,8 @@ Supported types include:
 
 * Nullable variants of the preceding types.
 * Arrays of the preceding types, whether they're nullable or not nullable.
+
+[!INCLUDE[](~/blazor/includes/compression-with-untrusted-data.md)]
 
 ### Replace a query parameter value when the parameter exists
 
@@ -1605,6 +1608,71 @@ The following HTML markup is rendered:
 >     </li>
 > }
 > ```
+
+<xref:Microsoft.AspNetCore.Components.Routing.NavLink> component entries can be dynamically created from the app's components via reflection. The following example demonstrates the general approach for further customization.
+
+For the following demonstration, a consistent, standard naming convention is used for the app's components:
+
+* Routable component file names use Pascal case&dagger;, for example `Pages/ProductDetail.razor`.
+* Routable component file paths match their URLs in kebab case&Dagger; with hyphens appearing between words in a component's route template. For example, a `ProductDetail` component with a route template of `/product-detail` (`@page "/product-detail"`) is requested in a browser at the relative URL `/product-detail`.
+
+&dagger;Pascal case (upper camel case) is a naming convention without spaces and punctuation and with the first letter of each word capitalized, including the first word.  
+&Dagger;Kebab case is a naming convention without spaces and punctuation that uses lowercase letters and dashes between words.
+
+In the Razor markup of the `NavMenu` component (`NavMenu.razor`) under the default `Home` page, <xref:Microsoft.AspNetCore.Components.Routing.NavLink> components are added from a collection:
+
+```diff
+<div class="nav-scrollable" 
+    onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" 
+                    aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
++       @foreach (var name in GetRoutableComponents())
++       {
++           <div class="nav-item px-3">
++               <NavLink class="nav-link" 
++                       href="@Regex.Replace(name, @"(\B[A-Z]|\d+)", "-$1").ToLower()">
++                   @Regex.Replace(name, @"(\B[A-Z]|\d+)", " $1")
++               </NavLink>
++           </div>
++       }
+
+    </nav>
+</div>
+```
+
+The `GetRoutableComponents` method in the `@code` block:
+
+```csharp
+public IEnumerable<string> GetRoutableComponents()
+{
+    return Assembly.GetExecutingAssembly()
+        .ExportedTypes
+        .Where(t => t.IsSubclassOf(typeof(ComponentBase)))
+        .Where(c => c.GetCustomAttributes(inherit: true)
+                     .OfType<RouteAttribute>()
+                     .Any())
+        .Where(c => c.Name != "Home" && c.Name != "Error")
+        .OrderBy(o => o.Name)
+        .Select(c => c.Name);
+}
+```
+
+The preceding example doesn't include the following pages in the rendered list of components:
+
+* `Home` page: The page is listed separately from the automatically generated links because it should appear at the top of the list and set the `Match` parameter.
+* `Error` page: The error page is only navigated to by the framework and shouldn't be listed.
+
+:::moniker range=">= aspnetcore-8.0"
+
+For an example of the preceding code in a sample app that you can run locally, obtain the [**Blazor Web App** or **Blazor WebAssembly** sample app](xref:blazor/fundamentals/index#sample-apps).
+
+:::moniker-end
 
 ## ASP.NET Core endpoint routing integration
 

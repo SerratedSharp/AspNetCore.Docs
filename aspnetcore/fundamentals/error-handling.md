@@ -3,16 +3,16 @@ title: Handle errors in ASP.NET Core
 author: tdykstra
 description: Discover how to handle errors in ASP.NET Core apps.
 monikerRange: '>= aspnetcore-3.1'
-ms.author: riande
+ms.author: tdykstra
 ms.custom: mvc
-ms.date: 07/06/2023
+ms.date: 05/20/2024
 uid: fundamentals/error-handling
 ---
 # Handle errors in ASP.NET Core
 
 [!INCLUDE[](~/includes/not-latest-version.md)]
 
-:::moniker range=">= aspnetcore-8.0"
+:::moniker range=">= aspnetcore-9.0"
 
 By [Tom Dykstra](https://github.com/tdykstra/)
 
@@ -35,6 +35,11 @@ The Developer Exception Page can include the following information about the exc
 * Query string parameters, if any
 * Cookies, if any
 * Headers
+* Endpoint metadata, if any
+
+The following image shows a sample developer exception page with animation to show the tabs and the information displayed:
+
+:::image type="content" source="~/fundamentals/error-handling/_static/aspnetcore-developer-page-improvements.gif" alt-text="Developer exception page animated to show each tab selected.":::
 
 The Developer Exception Page isn't guaranteed to provide any information. Use [Logging](xref:fundamentals/logging/index) for complete error information.
 
@@ -108,12 +113,12 @@ The following example shows how to register an `IExceptionHandler` implementatio
 When the preceding code runs in the Development environment:
 
 * The `CustomExceptionHandler` is called first to handle an exception.
-* After logging the exception, the `TryHandleException` method returns `false`, so the [developer exception page](#developer-exception-page) is shown.
+* After logging the exception, the `TryHandleAsync` method returns `false`, so the [developer exception page](#developer-exception-page) is shown.
 
 In other environments:
 
 * The `CustomExceptionHandler` is called first to handle an exception.
-* After logging the exception, the `TryHandleException` method returns `false`, so the [`/Error` page](#exception-handler-page) is shown.
+* After logging the exception, the `TryHandleAsync` method returns `false`, so the [`/Error` page](#exception-handler-page) is shown.
 
 <!-- links to this in other docs require sestatuscodepages -->
 <a name="sestatuscodepages"></a>
@@ -281,7 +286,7 @@ The generated problem details can be customized using <xref:Microsoft.AspNetCore
 
 The following code uses <xref:Microsoft.AspNetCore.Http.ProblemDetailsOptions> to set <xref:Microsoft.AspNetCore.Http.ProblemDetailsOptions.CustomizeProblemDetails>:
 
-:::code language="csharp" source="~/fundamentals/error-handling/samples/7.x/ErrorHandlingSample/Snippets/Program.cs" id="snippet_CustomizeProblemDetails" highlight="3-5":::
+:::code language="csharp" source="~/fundamentals/error-handling/samples/7.x/ErrorHandlingSample/Snippets/Program.cs" id="snippet_CustomizeProblemDetails" highlight="1-3":::
 
 For example, an [`HTTP Status 400 Bad Request`](https://developer.mozilla.org/docs/Web/HTTP/Status/400) endpoint result produces the following problem details response body:
 
@@ -359,4 +364,5 @@ An alternative approach to generate problem details is to use the third-party Nu
 
 :::moniker-end
 
+[!INCLUDE[](~/fundamentals/error-handling/includes/error-handling8.md)]
 [!INCLUDE[](~/fundamentals/error-handling/includes/error-handling3-7.md)]

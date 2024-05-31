@@ -16,6 +16,20 @@ This article explains how to configure and manage SignalR connections in Blazor 
 
 For general guidance on ASP.NET Core SignalR configuration, see the topics in the <xref:signalr/introduction> area of the documentation, especially <xref:signalr/configuration#configure-server-options>.
 
+Server-side apps use ASP.NET Core SignalR to communicate with the browser. [SignalR's hosting and scaling conditions](xref:signalr/publish-to-azure-web-app) apply to server-side apps.
+
+Blazor works best when using WebSockets as the SignalR transport due to lower latency, reliability, and [security](xref:signalr/security). Long Polling is used by SignalR when WebSockets isn't available or when the app is explicitly configured to use Long Polling.
+
+:::moniker range=">= aspnetcore-8.0"
+
+<!-- UPDATE 9.0 Remove when support is present -->
+
+## Azure SignalR Service with stateful reconnect
+
+[Stateful reconnect](xref:signalr/configuration#configure-stateful-reconnect) (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilderHttpExtensions.WithStatefulReconnect%2A>) was released with .NET 8 but isn't currently supported for the Azure SignalR Service. For more information, see [Stateful Reconnect Support? (`Azure/azure-signalr` #1878)](https://github.com/Azure/azure-signalr/issues/1878).
+
+:::moniker-end
+
 :::moniker range=">= aspnetcore-9.0"
 
 ## WebSocket compression for Interactive Server components
@@ -161,7 +175,6 @@ To resolve the problem, use ***either*** of the following approaches:
 ## Additional client-side resources
 
 * [Secure a SignalR hub](xref:blazor/security/webassembly/index#secure-a-signalr-hub)
-* <xref:blazor/host-and-deploy/webassembly#signalr-configuration>
 * <xref:signalr/introduction>
 * <xref:signalr/configuration>
 * [Blazor samples GitHub repository (`dotnet/blazor-samples`)](https://github.com/dotnet/blazor-samples) ([how to download](xref:blazor/fundamentals/index#sample-apps))
@@ -183,30 +196,20 @@ Sticky sessions are enabled for the Azure SignalR Service by setting the service
 
 ## Server-side circuit handler options
 
-Configure the circuit with the <xref:Microsoft.AspNetCore.Components.Server.CircuitOptions> shown in the following table.
+Configure the circuit with <xref:Microsoft.AspNetCore.Components.Server.CircuitOptions>. View default values in the [reference source](https://github.com/dotnet/aspnetcore/blob/main/src/Components/Server/src/CircuitOptions.cs).
 
-| Option | Default | Description |
-| --- | --- | --- |
-| <xref:Microsoft.AspNetCore.Components.Server.CircuitOptions.DetailedErrors> | `false` | Send detailed exception messages to JavaScript when an unhandled exception occurs on the circuit or when a .NET method invocation through JS interop results in an exception. |
-| <xref:Microsoft.AspNetCore.Components.Server.CircuitOptions.DisconnectedCircuitMaxRetained> | 100 | Maximum number of disconnected circuits that the server holds in memory at a time. |
-| <xref:Microsoft.AspNetCore.Components.Server.CircuitOptions.DisconnectedCircuitRetentionPeriod> | 3 minutes | Maximum amount of time a disconnected circuit is held in memory before being torn down. |
-| <xref:Microsoft.AspNetCore.Components.Server.CircuitOptions.JSInteropDefaultCallTimeout> | 1 minute | Maximum amount of time the server waits before timing out an asynchronous JavaScript function invocation. |
-| <xref:Microsoft.AspNetCore.Components.Server.CircuitOptions.MaxBufferedUnacknowledgedRenderBatches> | 10 | Maximum number of unacknowledged render batches the server keeps in memory per circuit at a given time to support robust reconnection. After reaching the limit, the server stops producing new render batches until one or more batches are acknowledged by the client. |
+[!INCLUDE[](~/includes/aspnetcore-repo-ref-source-links.md)]
 
 :::moniker range=">= aspnetcore-8.0"
 
-Configure the options in the `Program` file with an options delegate to <xref:Microsoft.Extensions.DependencyInjection.ServerRazorComponentsBuilderExtensions.AddInteractiveServerComponents%2A>. The following example assigns the default option values shown in the preceding table.
+Read or set the options in the `Program` file with an options delegate to <xref:Microsoft.Extensions.DependencyInjection.ServerRazorComponentsBuilderExtensions.AddInteractiveServerComponents%2A>. The `{OPTION}` placeholder represents the option, and the `{VALUE}` placeholder is the value.
 
 In the `Program` file:
 
 ```csharp
 builder.Services.AddRazorComponents().AddInteractiveServerComponents(options =>
 {
-    options.DetailedErrors = false;
-    options.DisconnectedCircuitMaxRetained = 100;
-    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(3);
-    options.JSInteropDefaultCallTimeout = TimeSpan.FromMinutes(1);
-    options.MaxBufferedUnacknowledgedRenderBatches = 10;
+    options.{OPTION} = {VALUE};
 });
 ```
 
@@ -214,18 +217,14 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents(options =>
 
 :::moniker range=">= aspnetcore-6.0 < aspnetcore-8.0"
 
-Configure the options in the `Program` file with an options delegate to <xref:Microsoft.Extensions.DependencyInjection.ComponentServiceCollectionExtensions.AddServerSideBlazor%2A>. The following example assigns the default option values shown in the preceding table.
+Read or set the options in the `Program` file with an options delegate to <xref:Microsoft.Extensions.DependencyInjection.ComponentServiceCollectionExtensions.AddServerSideBlazor%2A>. The `{OPTION}` placeholder represents the option, and the `{VALUE}` placeholder is the value.
 
 In the `Program` file:
 
 ```csharp
 builder.Services.AddServerSideBlazor(options =>
 {
-    options.DetailedErrors = false;
-    options.DisconnectedCircuitMaxRetained = 100;
-    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(3);
-    options.JSInteropDefaultCallTimeout = TimeSpan.FromMinutes(1);
-    options.MaxBufferedUnacknowledgedRenderBatches = 10;
+    options.{OPTION} = {VALUE};
 });
 ```
 
@@ -233,24 +232,22 @@ builder.Services.AddServerSideBlazor(options =>
 
 :::moniker range="< aspnetcore-6.0"
 
-Configure the options in `Startup.ConfigureServices` with an options delegate to <xref:Microsoft.Extensions.DependencyInjection.ComponentServiceCollectionExtensions.AddServerSideBlazor%2A>. The following example assigns the default option values shown in the preceding table.
+Read or set the options in `Startup.ConfigureServices` with an options delegate to <xref:Microsoft.Extensions.DependencyInjection.ComponentServiceCollectionExtensions.AddServerSideBlazor%2A>. The `{OPTION}` placeholder represents the option, and the `{VALUE}` placeholder is the value.
 
 In `Startup.ConfigureServices` of `Startup.cs`:
 
 ```csharp
 services.AddServerSideBlazor(options =>
 {
-    options.DetailedErrors = false;
-    options.DisconnectedCircuitMaxRetained = 100;
-    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(3);
-    options.JSInteropDefaultCallTimeout = TimeSpan.FromMinutes(1);
-    options.MaxBufferedUnacknowledgedRenderBatches = 10;
+    options.{OPTION} = {VALUE};
 });
 ```
 
 :::moniker-end
 
-To configure the <xref:Microsoft.AspNetCore.SignalR.HubConnectionContext>, use <xref:Microsoft.AspNetCore.SignalR.HubConnectionContextOptions> with <xref:Microsoft.Extensions.DependencyInjection.ServerSideBlazorBuilderExtensions.AddHubOptions%2A>. For option descriptions, see <xref:signalr/configuration#configure-server-options>. The following example assigns the default option values.
+To configure the <xref:Microsoft.AspNetCore.SignalR.HubConnectionContext>, use <xref:Microsoft.AspNetCore.SignalR.HubConnectionContextOptions> with <xref:Microsoft.Extensions.DependencyInjection.ServerSideBlazorBuilderExtensions.AddHubOptions%2A>. View the defaults for the hub connection context options in [reference source](https://github.com/dotnet/aspnetcore/blob/main/src/SignalR/server/Core/src/HubConnectionContextOptions.cs). For option descriptions in the SignalR documentation, see <xref:signalr/configuration#configure-server-options>. The `{OPTION}` placeholder represents the option, and the `{VALUE}` placeholder is the value.
+
+[!INCLUDE[](~/includes/aspnetcore-repo-ref-source-links.md)]
 
 :::moniker range=">= aspnetcore-8.0"
 
@@ -259,13 +256,7 @@ In the `Program` file:
 ```csharp
 builder.Services.AddRazorComponents().AddInteractiveServerComponents().AddHubOptions(options =>
 {
-    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-    options.EnableDetailedErrors = false;
-    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
-    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-    options.MaximumParallelInvocationsPerClient = 1;
-    options.MaximumReceiveMessageSize = 32 * 1024;
-    options.StreamBufferCapacity = 10;
+    options.{OPTION} = {VALUE};
 });
 ```
 
@@ -278,13 +269,7 @@ In the `Program` file:
 ```csharp
 builder.Services.AddServerSideBlazor().AddHubOptions(options =>
 {
-    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-    options.EnableDetailedErrors = false;
-    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
-    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-    options.MaximumParallelInvocationsPerClient = 1;
-    options.MaximumReceiveMessageSize = 32 * 1024;
-    options.StreamBufferCapacity = 10;
+    options.{OPTION} = {VALUE};
 });
 ```
 
@@ -297,39 +282,31 @@ In `Startup.ConfigureServices` of `Startup.cs`:
 ```csharp
 services.AddServerSideBlazor().AddHubOptions(options =>
 {
-    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-    options.EnableDetailedErrors = false;
-    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
-    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-    options.MaximumParallelInvocationsPerClient = 1;
-    options.MaximumReceiveMessageSize = 32 * 1024;
-    options.StreamBufferCapacity = 10;
+    options.{OPTION} = {VALUE};
 });
 ```
 
 :::moniker-end
 
+<!-- UPDATE 9.0 Check on a fix for the added 
+                MaximumParallelInvocationsPerClient warning
+                per https://github.com/dotnet/aspnetcore/issues/53951 
+                and version if fixed. -->
+
 > [!WARNING]
 > The default value of <xref:Microsoft.AspNetCore.SignalR.HubOptions.MaximumReceiveMessageSize> is 32 KB. Increasing the value may increase the risk of [Denial of Service (DoS) attacks](xref:blazor/security/server/interactive-server-side-rendering#denial-of-service-dos-attacks).
+>
+> Blazor relies on <xref:Microsoft.AspNetCore.SignalR.HubOptions.MaximumParallelInvocationsPerClient%2A> set to 1, which is the default value. For more information, see [MaximumParallelInvocationsPerClient > 1 breaks file upload in Blazor Server mode (`dotnet/aspnetcore` #53951)](https://github.com/dotnet/aspnetcore/issues/53951).
 
 For information on memory management, see <xref:blazor/host-and-deploy/server#memory-management>.
 
 ## Blazor hub options
 
-Configure <xref:Microsoft.AspNetCore.Builder.ComponentEndpointRouteBuilderExtensions.MapBlazorHub%2A> options to control <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions> of the Blazor hub:
+Configure <xref:Microsoft.AspNetCore.Builder.ComponentEndpointRouteBuilderExtensions.MapBlazorHub%2A> options to control <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions> of the Blazor hub. View the defaults for the hub connection dispatcher options in [reference source](https://github.com/dotnet/aspnetcore/blob/main/src/SignalR/common/Http.Connections/src/HttpConnectionDispatcherOptions.cs). The `{OPTION}` placeholder represents the option, and the `{VALUE}` placeholder is the value.
+
+[!INCLUDE[](~/includes/aspnetcore-repo-ref-source-links.md)]
 
 :::moniker range=">= aspnetcore-8.0"
-
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.AllowStatefulReconnects>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.ApplicationMaxBufferSize>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.AuthorizationData> (*Read only*)
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.CloseOnAuthenticationExpiration>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.LongPolling> (*Read only*)
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.MinimumProtocolVersion>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.TransportMaxBufferSize>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.Transports>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.TransportSendTimeout>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.WebSockets> (*Read only*)
 
 Place the call to `app.MapBlazorHub` after the call to `app.MapRazorComponents` in the app's `Program` file:
 
@@ -344,13 +321,6 @@ app.MapBlazorHub(options =>
 
 :::moniker range=">= aspnetcore-6.0 < aspnetcore-8.0"
 
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.ApplicationMaxBufferSize>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.AuthorizationData> (*Read only*)
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.CloseOnAuthenticationExpiration>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.LongPolling> (*Read only*)
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.TransportMaxBufferSize>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.TransportSendTimeout>
-
 Supply the options to `app.MapBlazorHub` in the app's `Program` file:
 
 ```csharp
@@ -363,11 +333,6 @@ app.MapBlazorHub(options =>
 :::moniker-end
 
 :::moniker range="< aspnetcore-6.0"
-
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.ApplicationMaxBufferSize>
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.AuthorizationData> (*Read only*)
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.LongPolling> (*Read only*)
-* <xref:Microsoft.AspNetCore.Http.Connections.HttpConnectionDispatcherOptions.TransportMaxBufferSize>
 
 Supply the options to `app.MapBlazorHub` in endpoint routing configuration:
 
@@ -382,8 +347,6 @@ app.UseEndpoints(endpoints =>
 });
 
 :::moniker-end
-
-In the preceding example, the `{OPTION}` placeholder is the option, and the `{VALUE}` placeholder is the value.
 
 ## Maximum receive message size
 
@@ -650,27 +613,43 @@ By default, components are prerendered on the server before the client connectio
 
 Monitor inbound circuit activity using the <xref:Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler.CreateInboundActivityHandler%2A> method on <xref:Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler>. Inbound circuit activity is any activity sent from the browser to the server, such as UI events or JavaScript-to-.NET interop calls.
 
-For example, you can use a circuit activity handler to detect if the client is idle:
+For example, you can use a circuit activity handler to detect if the client is idle and log its circuit ID (<xref:Microsoft.AspNetCore.Components.Server.Circuits.Circuit.Id?displayProperty=nameWithType>):
 
 ```csharp
+using Microsoft.AspNetCore.Components.Server.Circuits;
+using Microsoft.Extensions.Options;
+using Timer = System.Timers.Timer;
+
 public sealed class IdleCircuitHandler : CircuitHandler, IDisposable
 {
-    readonly Timer timer;
-    readonly ILogger logger;
+    private Circuit? currentCircuit;
+    private readonly ILogger logger;
+    private readonly Timer timer;
 
-    public IdleCircuitHandler(IOptions<IdleCircuitOptions> options, 
-        ILogger<IdleCircuitHandler> logger)
+    public IdleCircuitHandler(ILogger<IdleCircuitHandler> logger, 
+        IOptions<IdleCircuitOptions> options)
     {
-        timer = new Timer();
-        timer.Interval = options.Value.IdleTimeout.TotalMilliseconds;
-        timer.AutoReset = false;
+        timer = new Timer
+        {
+            Interval = options.Value.IdleTimeout.TotalMilliseconds,
+            AutoReset = false
+        };
+
         timer.Elapsed += CircuitIdle;
         this.logger = logger;
     }
 
     private void CircuitIdle(object? sender, System.Timers.ElapsedEventArgs e)
     {
-        logger.LogInformation("{Circuit} is idle", nameof(CircuitIdle));
+        logger.LogInformation("{CircuitId} is idle", currentCircuit?.Id);
+    }
+
+    public override Task OnCircuitOpenedAsync(Circuit circuit, 
+        CancellationToken cancellationToken)
+    {
+        currentCircuit = circuit;
+
+        return Task.CompletedTask;
     }
 
     public override Func<CircuitInboundActivityContext, Task> CreateInboundActivityHandler(
@@ -680,14 +659,12 @@ public sealed class IdleCircuitHandler : CircuitHandler, IDisposable
         {
             timer.Stop();
             timer.Start();
+
             return next(context);
         };
     }
 
-    public void Dispose()
-    {
-        timer.Dispose();
-    }
+    public void Dispose() => timer.Dispose();
 }
 
 public class IdleCircuitOptions
@@ -703,6 +680,7 @@ public static class IdleCircuitHandlerServiceCollectionExtensions
     {
         services.Configure(configureOptions);
         services.AddIdleCircuitHandler();
+
         return services;
     }
 
@@ -710,9 +688,17 @@ public static class IdleCircuitHandlerServiceCollectionExtensions
         this IServiceCollection services)
     {
         services.AddScoped<CircuitHandler, IdleCircuitHandler>();
+
         return services;
     }
 }
+```
+
+Register the service in the `Program` file. The following example configures the default idle timeout of five minutes to five seconds in order to test the preceding `IdleCircuitHandler` implementation:
+
+```csharp
+builder.Services.AddIdleCircuitHandler(options => 
+    options.IdleTimeout = TimeSpan.FromSeconds(5));
 ```
 
 Circuit activity handlers also provide an approach for accessing scoped Blazor services from other non-Blazor dependency injection (DI) scopes. For more information and examples, see:
@@ -790,7 +776,8 @@ Blazor Server:
 <script>
   Blazor.start({
     configureSignalR: function (builder) {
-        builder.withServerTimeout(30000).withKeepAliveInterval(15000);
+      builder.withServerTimeout(30000).withKeepAliveInterval(15000);
+    }
   });
 </script>
 ```
@@ -866,7 +853,7 @@ protected override async Task OnInitializedAsync()
 
 :::moniker-end
 
-When changing the values of the server timeout (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout>) or the Keep-Alive interval (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.KeepAliveInterval>:
+When changing the values of the server timeout (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout>) or the Keep-Alive interval (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.KeepAliveInterval>):
 
 * The server timeout should be at least double the value assigned to the Keep-Alive interval.
 * The Keep-Alive interval should be less than or equal to half the value assigned to the server timeout.
@@ -1141,6 +1128,177 @@ Blazor Server:
 **In the preceding example, the `{BLAZOR SCRIPT}` placeholder is the Blazor script path and file name.** For the location of the script and the path to use, see <xref:blazor/project-structure#location-of-the-blazor-script>.
 
 For more information on Blazor startup, see <xref:blazor/fundamentals/startup>.
+
+:::moniker range=">= aspnetcore-6.0"
+
+## Control when the reconnection UI appears
+
+Controlling when the reconnection UI appears can be useful in the following situations:
+
+* A deployed app frequently displays the reconnection UI due to ping timeouts caused by internal network or Internet latency, and you would like to increase the delay.
+* An app should report to users that the connection has dropped sooner, and you would like to shorten the delay.
+
+The timing of the appearance of the reconnection UI is influenced by adjusting the Keep-Alive interval and timeouts on the client. The reconnection UI appears when the server timeout is reached on the client (`withServerTimeout`, [Client configuration](#client-configuration) section). However, changing the value of `withServerTimeout` requires changes to other Keep-Alive, timeout, and handshake settings described in the following guidance.
+
+As general recommendations for the guidance that follows:
+
+* The Keep-Alive interval should match between client and server configurations.
+* Timeouts should be at least double the value assigned to the Keep-Alive interval.
+
+### Server configuration
+
+Set the following:
+
+* <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> (default: 30 seconds): The time window clients have to send a message before the server closes the connection.
+* <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> (default: 15 seconds): The interval used by the server to timeout incoming handshake requests by clients.
+* <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> (default: 15 seconds): The interval used by the server to send keep alive pings to connected clients. Note that there is also a Keep-Alive interval setting on the client, which should match the server's value.
+
+The <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> and <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> can be increased, and the <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> can remain the same. The important consideration is that if you change the values, make sure that the timeouts are at least double the value of the Keep-Alive interval and that the Keep-Alive interval matches between server and client. For more information, see the [Configure SignalR timeouts and Keep-Alive on the client](#configure-signalr-timeouts-and-keep-alive-on-the-client) section.
+
+In the following example:
+
+* The <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> is increased to 60 seconds (default value: 30 seconds).
+* The <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> is increased to 30 seconds (default value: 15 seconds).
+* The <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> isn't set in developer code and uses its default value of 15 seconds. Decreasing the value of the Keep-Alive interval increases the frequency of communication pings, which increases the load on the app, server, and network. Care must be taken to avoid introducing poor performance when lowering the Keep-Alive interval.
+
+**Blazor Web App** (.NET 8 or later) in the server project's `Program` file:
+
+```csharp
+builder.Services.AddRazorComponents().AddInteractiveServerComponents()
+    .AddHubOptions(options =>
+{
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+});
+```
+
+**Blazor Server** in the `Program` file:
+
+```csharp
+builder.Services.AddServerSideBlazor()
+    .AddHubOptions(options =>
+    {
+        options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+        options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+    });
+```
+
+For more information, see the [Server-side circuit handler options](#server-side-circuit-handler-options) section.
+
+### Client configuration
+
+:::moniker-end
+
+:::moniker range=">= aspnetcore-8.0"
+
+Set the following:
+
+* `withServerTimeout` (default: 30 seconds): Configures the server timeout, specified in milliseconds, for the circuit's hub connection.
+* `withKeepAliveInterval` (default: 15 seconds): The interval, specified in milliseconds, at which the connection sends Keep-Alive messages.
+
+The server timeout can be increased, and the Keep-Alive interval can remain the same. The important consideration is that if you change the values, make sure that the server timeout is at least double the value of the Keep-Alive interval and that the Keep-Alive interval values match between server and client. For more information, see the [Configure SignalR timeouts and Keep-Alive on the client](#configure-signalr-timeouts-and-keep-alive-on-the-client) section.
+
+In the following [startup configuration](xref:blazor/fundamentals/startup) example ([location of the Blazor script](xref:blazor/project-structure#location-of-the-blazor-script)), a custom value of 60 seconds is used for the server timeout. The Keep-Alive interval (`withKeepAliveInterval`) isn't set and uses its default value of 15 seconds.
+
+Blazor Web App:
+
+```html
+<script src="{BLAZOR SCRIPT}" autostart="false"></script>
+<script>
+  Blazor.start({
+    circuit: {
+      configureSignalR: function (builder) {
+        builder.withServerTimeout(60000);
+      }
+    }
+  });
+</script>
+```
+
+Blazor Server:
+
+```html
+<script src="{BLAZOR SCRIPT}" autostart="false"></script>
+<script>
+  Blazor.start({
+    configureSignalR: function (builder) {
+      builder.withServerTimeout(60000);
+    }
+  });
+</script>
+```
+
+When creating a hub connection in a component, set the server timeout (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilderExtensions.WithServerTimeout%2A>, default: 30 seconds) on the <xref:Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilder>. Set the <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.HandshakeTimeout> (default: 15 seconds) on the built <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection>. Confirm that the timeouts are at least double the Keep-Alive interval (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilderExtensions.WithKeepAliveInterval%2A>/<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.KeepAliveInterval>) and that the Keep-Alive value matches between server and client.
+
+The following example is based on the `Index` component in the [SignalR with Blazor tutorial](xref:blazor/tutorials/signalr-blazor). The server timeout is increased to 60 seconds, and the handshake timeout is increased to 30 seconds. The Keep-Alive interval isn't set and uses its default value of 15 seconds.
+
+```csharp
+protected override async Task OnInitializedAsync()
+{
+    hubConnection = new HubConnectionBuilder()
+        .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+        .WithServerTimeout(TimeSpan.FromSeconds(60))
+        .Build();
+
+    hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(30);
+
+    hubConnection.On<string, string>("ReceiveMessage", (user, message) => ...
+
+    await hubConnection.StartAsync();
+}
+```
+
+:::moniker-end
+
+:::moniker range=">= aspnetcore-6.0 < aspnetcore-8.0"
+
+Set the following:
+
+* `serverTimeoutInMilliseconds` (default: 30 seconds): Configures the server timeout, specified in milliseconds, for the circuit's hub connection.
+* `keepAliveIntervalInMilliseconds` (default: 15 seconds): The interval, specified in milliseconds, at which the connection sends Keep-Alive messages.
+
+The server timeout can be increased, and the Keep-Alive interval can remain the same. The important consideration is that if you change the values, make sure that the server timeout is at least double the value of the Keep-Alive interval and that the Keep-Alive interval values match between server and client. For more information, see the [Configure SignalR timeouts and Keep-Alive on the client](#configure-signalr-timeouts-and-keep-alive-on-the-client) section.
+
+In the following [startup configuration](xref:blazor/fundamentals/startup) example ([location of the Blazor script](xref:blazor/project-structure#location-of-the-blazor-script)), a custom value of 60 seconds is used for the server timeout. The Keep-Alive interval (`keepAliveIntervalInMilliseconds`) isn't set and uses its default value of 15 seconds.
+
+In `Pages/_Host.cshtml`:
+
+```html
+<script src="_framework/blazor.server.js" autostart="false"></script>
+<script>
+  Blazor.start({
+    configureSignalR: function (builder) {
+      let c = builder.build();
+      c.serverTimeoutInMilliseconds = 60000;
+      builder.build = () => {
+        return c;
+      };
+    }
+  });
+</script>
+```
+
+When creating a hub connection in a component, set the <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout> (default: 30 seconds) and <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.HandshakeTimeout> (default: 15 seconds) on the built <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection>. Confirm that the timeouts are at least double the Keep-Alive interval. Confirm that the Keep-Alive interval matches between server and client.
+
+The following example is based on the `Index` component in the [SignalR with Blazor tutorial](xref:blazor/tutorials/signalr-blazor). The <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout> is increased to 60 seconds, and the <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.HandshakeTimeout> is increased to 30 seconds. The Keep-Alive interval (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.KeepAliveInterval>) isn't set and uses its default value of 15 seconds.
+
+```csharp
+protected override async Task OnInitializedAsync()
+{
+    hubConnection = new HubConnectionBuilder()
+        .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+        .Build();
+
+    hubConnection.ServerTimeout = TimeSpan.FromSeconds(60);
+    hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(30);
+
+    hubConnection.On<string, string>("ReceiveMessage", (user, message) => ...
+
+    await hubConnection.StartAsync();
+}
+```
+
+:::moniker-end
 
 :::moniker range=">= aspnetcore-5.0"
 

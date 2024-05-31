@@ -124,7 +124,7 @@ The following `returnArrayAsync` JS function, calls the `ReturnArrayAsync` .NET 
 ```
 
 > [!NOTE]
-> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/index#javascript-location>.
+> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/javascript-location>.
 
 When the **`Trigger .NET static method`** button is selected, the browser's developer tools console output displays the array data. The format of the output differs slightly among browsers. The following output shows the format used by Microsoft Edge:
 
@@ -289,9 +289,9 @@ The following sections of this article demonstrate various approaches for invoki
 
 ## Avoid trimming JavaScript-invokable .NET methods
 
-*This section applies to client-side apps with [ahead-of-time (AOT) compilation](xref:blazor/host-and-deploy/webassembly#ahead-of-time-aot-compilation) and [runtime relinking](xref:blazor/host-and-deploy/webassembly#runtime-relinking) enabled.*
+*This section applies to client-side apps with [ahead-of-time (AOT) compilation](xref:blazor/tooling/webassembly#ahead-of-time-aot-compilation) and [runtime relinking](xref:blazor/tooling/webassembly#runtime-relinking) enabled.*
 
-Several of the examples in the following sections are based on a class instance approach, where the JavaScript-invokable .NET method marked with the [`[JSInvokable]` attribute](xref:Microsoft.JSInterop.JSInvokableAttribute) is a member of a class that isn't a Razor component. When such .NET methods are located in a Razor component, they're protected from [runtime relinking/trimming](xref:blazor/host-and-deploy/webassembly#runtime-relinking). In order to protect the .NET methods from trimming outside of Razor components, implement the methods with the [`DynamicDependency` attribute](xref:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute) on the class's constructor, as the following example demonstrates:
+Several of the examples in the following sections are based on a class instance approach, where the JavaScript-invokable .NET method marked with the [`[JSInvokable]` attribute](xref:Microsoft.JSInterop.JSInvokableAttribute) is a member of a class that isn't a Razor component. When such .NET methods are located in a Razor component, they're protected from [runtime relinking/trimming](xref:blazor/tooling/webassembly#runtime-relinking). In order to protect the .NET methods from trimming outside of Razor components, implement the methods with the [`DynamicDependency` attribute](xref:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute) on the class's constructor, as the following example demonstrates:
 
 ```csharp
 using System.Diagnostics.CodeAnalysis;
@@ -331,7 +331,7 @@ The following `sayHello1` JS function receives a <xref:Microsoft.JSInterop.DotNe
 ```
 
 > [!NOTE]
-> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/index#javascript-location>.
+> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/javascript-location>.
 
 In the preceding example, the variable name `dotNetHelper` is arbitrary and can be changed to any preferred name.
 
@@ -665,7 +665,7 @@ In the preceding example:
 ```
 
 > [!NOTE]
-> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/index#javascript-location>.
+> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/javascript-location>.
 
 In the preceding example:
 
@@ -766,7 +766,7 @@ In the following `invokeMethodsAsync` function:
 ```
 
 > [!NOTE]
-> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/index#javascript-location>.
+> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/javascript-location>.
 
 In the following `GenericsExample` component:
 
@@ -925,7 +925,7 @@ The following `sayHello1` JS function:
 ```
 
 > [!NOTE]
-> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/index#javascript-location>.
+> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/javascript-location>.
 
 In the preceding example, the variable name `dotNetHelper` is arbitrary and can be changed to any preferred name.
 
@@ -1165,7 +1165,7 @@ The following `updateMessageCaller` JS function invokes the `UpdateMessageCaller
 ```
 
 > [!NOTE]
-> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/index#javascript-location>.
+> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/javascript-location>.
 
 In the preceding example, the variable name `dotNetHelper` is arbitrary and can be changed to any preferred name.
 
@@ -1297,7 +1297,7 @@ The following `interopCall` JS function uses the <xref:Microsoft.JSInterop.DotNe
 ```
 
 > [!NOTE]
-> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/index#javascript-location>.
+> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/javascript-location>.
 
 In the preceding example, the variable name `dotNetHelper` is arbitrary and can be changed to any preferred name.
 
@@ -1393,24 +1393,24 @@ The following parent component includes four list items, each an instance of the
 
 ## JavaScript location
 
-Load JavaScript (JS) code using any of approaches described by the [JS interop overview article](xref:blazor/js-interop/index#javascript-location):
+Load JavaScript (JS) code using any of approaches described by the [article on JavaScript location](xref:blazor/js-interop/javascript-location):
 
 :::moniker range=">= aspnetcore-6.0"
 
-* [Load a script in `<head>` markup](xref:blazor/js-interop/index#load-a-script-in-head-markup) (*Not generally recommended*)
-* [Load a script in `<body>` markup](xref:blazor/js-interop/index#load-a-script-in-body-markup)
-* [Load a script from an external JavaScript file (`.js`) collocated with a component](xref:blazor/js-interop/index#load-a-script-from-an-external-javascript-file-js-collocated-with-a-component)
-* [Load a script from an external JavaScript file (`.js`)](xref:blazor/js-interop/index#load-a-script-from-an-external-javascript-file-js)
-* [Inject a script before or after Blazor starts](xref:blazor/js-interop/index#inject-a-script-before-or-after-blazor-starts)
+* [Load a script in `<head>` markup](xref:blazor/js-interop/javascript-location#load-a-script-in-head-markup) (*Not generally recommended*)
+* [Load a script in `<body>` markup](xref:blazor/js-interop/javascript-location#load-a-script-in-body-markup)
+* [Load a script from an external JavaScript file (`.js`) collocated with a component](xref:blazor/js-interop/javascript-location#load-a-script-from-an-external-javascript-file-js-collocated-with-a-component)
+* [Load a script from an external JavaScript file (`.js`)](xref:blazor/js-interop/javascript-location#load-a-script-from-an-external-javascript-file-js)
+* [Inject a script before or after Blazor starts](xref:blazor/js-interop/javascript-location#inject-a-script-before-or-after-blazor-starts)
 
 :::moniker-end
 
 :::moniker range="< aspnetcore-6.0"
 
-* [Load a script in `<head>` markup](xref:blazor/js-interop/index#load-a-script-in-head-markup) (*Not generally recommended*)
-* [Load a script in `<body>` markup](xref:blazor/js-interop/index#load-a-script-in-body-markup)
-* [Load a script from an external JavaScript file (`.js`)](xref:blazor/js-interop/index#load-a-script-from-an-external-javascript-file-js)
-* [Inject a script before or after Blazor starts](xref:blazor/js-interop/index#inject-a-script-before-or-after-blazor-starts)
+* [Load a script in `<head>` markup](xref:blazor/js-interop/javascript-location#load-a-script-in-head-markup) (*Not generally recommended*)
+* [Load a script in `<body>` markup](xref:blazor/js-interop/javascript-location#load-a-script-in-body-markup)
+* [Load a script from an external JavaScript file (`.js`)](xref:blazor/js-interop/javascript-location#load-a-script-from-an-external-javascript-file-js)
+* [Inject a script before or after Blazor starts](xref:blazor/js-interop/javascript-location#inject-a-script-before-or-after-blazor-starts)
 
 :::moniker-end
 
@@ -1490,7 +1490,7 @@ Provide a `sendByteArray` JS function. The function is called statically, which 
 ```
 
 > [!NOTE]
-> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/index#javascript-location>.
+> For general guidance on JS location and our recommendations for production apps, see <xref:blazor/js-interop/javascript-location>.
 
 :::moniker-end
 

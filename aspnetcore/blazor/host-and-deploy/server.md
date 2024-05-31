@@ -4,7 +4,7 @@ author: guardrex
 description: Learn how to host and deploy server-side Blazor apps using ASP.NET Core.
 monikerRange: '>= aspnetcore-3.1'
 ms.author: riande
-ms.custom: mvc
+ms.custom: mvc, linux-related-content
 ms.date: 02/09/2024
 uid: blazor/host-and-deploy/server
 ---
@@ -12,7 +12,7 @@ uid: blazor/host-and-deploy/server
 
 [!INCLUDE[](~/includes/not-latest-version.md)]
 
-This article explains how to host and deploy server-side Blazor apps using ASP.NET Core.
+This article explains how to host and deploy server-side Blazor apps (Blazor Web Apps and Blazor Server apps) using ASP.NET Core.
 
 ## Host configuration values
 
@@ -23,6 +23,8 @@ Server-side Blazor apps can accept [Generic Host configuration values](xref:fund
 Using a server-side hosting model, Blazor is executed on the server from within an ASP.NET Core app. UI updates, event handling, and JavaScript calls are handled over a [SignalR](xref:signalr/introduction) connection.
 
 A web server capable of hosting an ASP.NET Core app is required. Visual Studio includes a server-side app project template. For more information on Blazor project templates, see <xref:blazor/project-structure>.
+
+Publish an app in Release configuration and deploy the contents of the `bin/Release/{TARGET FRAMEWORK}/publish` folder, where the `{TARGET FRAMEWORK}` placeholder is the target framework.
 
 ## Scalability
 
@@ -42,6 +44,8 @@ Each circuit uses approximately 250 KB of memory for a minimal *Hello World*-sty
 
 [SignalR's hosting and scaling conditions](xref:signalr/publish-to-azure-web-app) apply to Blazor apps that use SignalR.
 
+For more information on SignalR in Blazor apps, including configuration guidance, see <xref:blazor/fundamentals/signalr>.
+
 :::moniker range=">= aspnetcore-6.0"
 
 ### Transports
@@ -57,200 +61,29 @@ A console warning appears if Long Polling is utilized:
 Recommendations for global deployments to geographical data centers:
 
 * Deploy the app to the regions where most of the users reside.
-* Take into consideration the increased latency for traffic across continents.
+* Take into consideration the increased latency for traffic across continents. To control the appearance of the reconnection UI, see <xref:blazor/fundamentals/signalr#control-when-the-reconnection-ui-appears>.
 * For Azure hosting, use the [Azure SignalR Service](#azure-signalr-service).
-
-If a deployed app frequently displays the reconnection UI due to ping timeouts caused by Internet latency, lengthen the server and client timeouts:
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-8.0"
-
-* **Server**
-
-  At least double the maximum roundtrip time expected between the client and the server. Test, monitor, and revise the timeouts as needed. For the SignalR hub, set the <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> (default: 30 seconds) and <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> (default: 15 seconds). The following example assumes that <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> uses the default value of 15 seconds.
-
-  > [!IMPORTANT]
-  > The <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> isn't directly related to the reconnection UI appearing. The Keep-Alive interval doesn't necessarily need to be changed. If the reconnection UI appearance issue is due to timeouts, the <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> and <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> can be increased and the Keep-Alive interval can remain the same. The important consideration is that if you change the Keep-Alive interval, make sure that the client timeout value is at least double the value of the Keep-Alive interval and that the Keep-Alive interval on the client matches the server setting.
-  >
-  > In the following example, the <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> is increased to 60 seconds, and the <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> is increased to 30 seconds.
-
-  In the server project's `Program.cs` file:
-
-  ```csharp
-  builder.Services.AddRazorComponents().AddInteractiveServerComponents()
-      .AddHubOptions(options =>
-  {
-      options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
-      options.HandshakeTimeout = TimeSpan.FromSeconds(30);
-  });
-  ```
-
-  For more information, see <xref:blazor/fundamentals/signalr#server-side-circuit-handler-options>.
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0 < aspnetcore-8.0"
-
-* **Server**
-
-  At least double the maximum roundtrip time expected between the client and the server. Test, monitor, and revise the timeouts as needed. For the SignalR hub, set the <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> (default: 30 seconds) and <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> (default: 15 seconds). The following example assumes that <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> uses the default value of 15 seconds.
-
-  > [!IMPORTANT]
-  > The <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> isn't directly related to the reconnection UI appearing. The Keep-Alive interval doesn't necessarily need to be changed. If the reconnection UI appearance issue is due to timeouts, the <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> and <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> can be increased and the Keep-Alive interval can remain the same. The important consideration is that if you change the Keep-Alive interval, make sure that the client timeout value is at least double the value of the Keep-Alive interval and that the Keep-Alive interval on the client matches the server setting.
-  >
-  > In the following example, the <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> is increased to 60 seconds, and the <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> is increased to 30 seconds.
-
-  In `Program.cs`:
-
-  ```csharp
-  builder.Services.AddServerSideBlazor()
-      .AddHubOptions(options =>
-      {
-          options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
-          options.HandshakeTimeout = TimeSpan.FromSeconds(30);
-      });
-  ```
-
-  For more information, see <xref:blazor/fundamentals/signalr#server-side-circuit-handler-options>.
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0"
-
-* **Client**
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-8.0"
-
-  Typically, double the value used for the server's <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> to set the timeout for the client's server timeout (`withServerTimeout` or <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout>, default: 30 seconds).
-
-  > [!IMPORTANT]
-  > The Keep-Alive interval (`withKeepAliveInterval` or <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.KeepAliveInterval>) isn't directly related to the reconnection UI appearing. The Keep-Alive interval doesn't necessarily need to be changed. If the reconnection UI appearance issue is due to timeouts, the server timeout can be increased and the Keep-Alive interval can remain the same. The important consideration is that if you change the Keep-Alive interval, make sure that the timeout value is at least double the value of the Keep-Alive interval and that the Keep-Alive interval on the server matches the client setting.
-  >
-  > In the following example, a custom value of 60 seconds is used for the server timeout.
-
-  In the [startup configuration](xref:blazor/fundamentals/startup) of a server-side Blazor app after the Blazor script (`blazor.*.js`) `<script>` tag.
-
-  Blazor Web App:
-
-  ```html
-  <script>
-    Blazor.start({
-      circuit: {
-        configureSignalR: function (builder) {
-          builder.withServerTimeout(60000);
-        }
-      }
-    });
-  </script>
-  ```
-
-  Blazor Server:
-
-  ```html
-  <script>
-    Blazor.start({
-      configureSignalR: function (builder) {
-        builder.withServerTimeout(60000);
-      }
-    });
-  </script>
-  ```
-
-  When creating a hub connection in a component, set the <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout> (default: 30 seconds) on the <xref:Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilder>. Set the <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.HandshakeTimeout> (default: 15 seconds) on the built <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection>.
-  
-  The following example is based on the `Index` component in the [SignalR with Blazor tutorial](xref:blazor/tutorials/signalr-blazor). The server timeout is increased to 60 seconds, and the handshake timeout is increased to 30 seconds:
-
-  ```csharp
-  protected override async Task OnInitializedAsync()
-  {
-      hubConnection = new HubConnectionBuilder()
-          .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-          .WithServerTimeout(TimeSpan.FromSeconds(60))
-          .Build();
-
-      hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(30);
-
-      hubConnection.On<string, string>("ReceiveMessage", (user, message) => ...
-
-      await hubConnection.StartAsync();
-  }
-  ```
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0 < aspnetcore-8.0"
-
-  Typically, double the value used for the server's <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> to set the timeout for the client's server timeout (`serverTimeoutInMilliseconds` or <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout>, default: 30 seconds).
-
-  > [!IMPORTANT]
-  > The Keep-Alive interval (`keepAliveIntervalInMilliseconds` or <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.KeepAliveInterval>) isn't directly related to the reconnection UI appearing. The Keep-Alive interval doesn't necessarily need to be changed. If the reconnection UI appearance issue is due to timeouts, the server timeout can be increased and the Keep-Alive interval can remain the same. The important consideration is that if you change the Keep-Alive interval, make sure that the timeout value is at least double the value of the Keep-Alive interval and that the Keep-Alive interval on the server matches the client setting.
-  >
-  > In the following example, a custom value of 60 seconds is used for the server timeout.
-
-  In `Pages/_Host.cshtml`:
-
-  ```html
-  <script src="_framework/blazor.server.js" autostart="false"></script>
-  <script>
-    Blazor.start({
-      configureSignalR: function (builder) {
-        let c = builder.build();
-        c.serverTimeoutInMilliseconds = 60000;
-        builder.build = () => {
-          return c;
-        };
-      }
-    });
-  </script>
-  ```
-
-  When creating a hub connection in a component, set the <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout> (default: 30 seconds) and <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.HandshakeTimeout> (default: 15 seconds) on the built <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection>.
-
-  The following example is based on the `Index` component in the [SignalR with Blazor tutorial](xref:blazor/tutorials/signalr-blazor). The server timeout is increased to 60 seconds, and the handshake timeout is increased to 30 seconds:
-
-  ```csharp
-  protected override async Task OnInitializedAsync()
-  {
-      hubConnection = new HubConnectionBuilder()
-          .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-          .Build();
-
-      hubConnection.ServerTimeout = TimeSpan.FromSeconds(60);
-      hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(30);
-
-      hubConnection.On<string, string>("ReceiveMessage", (user, message) => ...
-
-      await hubConnection.StartAsync();
-  }
-  ```
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0"
-
-  When changing the values of the server timeout (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout>) or the Keep-Alive interval (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.KeepAliveInterval>:
-
-  * The server timeout should be at least double the value assigned to the Keep-Alive interval.
-  * The Keep-Alive interval should be less than or equal to half the value assigned to the server timeout.
-
-For more information, see <xref:blazor/fundamentals/signalr#configure-signalr-timeouts-and-keep-alive-on-the-client>.
-
-:::moniker-end
-
-:::moniker range="< aspnetcore-6.0"
-
-Server-side apps use ASP.NET Core SignalR to communicate with the browser. [SignalR's hosting and scaling conditions](xref:signalr/publish-to-azure-web-app) apply to server-side apps.
-
-Blazor works best when using WebSockets as the SignalR transport due to lower latency, reliability, and [security](xref:signalr/security). Long Polling is used by SignalR when WebSockets isn't available or when the app is explicitly configured to use Long Polling. When deploying to Azure App Service, configure the app to use WebSockets in the Azure portal settings for the service. For details on configuring the app for Azure App Service, see the [SignalR publishing guidelines](xref:signalr/publish-to-azure-web-app).
 
 :::moniker-end
 
 ## Azure SignalR Service
 
-We recommend using the [Azure SignalR Service](xref:signalr/scale#azure-signalr-service) for server-side Blazor apps. The service works in conjunction with the app's Blazor Hub for scaling up a server-side Blazor app to a large number of concurrent SignalR connections. In addition, the SignalR Service's global reach and high-performance data centers significantly aid in reducing latency due to geography.
+:::moniker range=">= aspnetcore-8.0"
+
+For Blazor Web Apps that adopt interactive server-side rendering, consider using the [Azure SignalR Service](xref:signalr/scale#azure-signalr-service). The service works in conjunction with the app's Blazor Hub for scaling up to a large number of concurrent SignalR connections. In addition, the service's global reach and high-performance data centers significantly aid in reducing latency due to geography. If your hosting environment already handles these concerns, using the Azure SignalR Service isn't necessary.
+
+<!-- UPDATE 9.0 Remove when support is present -->
+
+> [!NOTE]
+> [Stateful reconnect](xref:signalr/configuration#configure-stateful-reconnect) (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnectionBuilderHttpExtensions.WithStatefulReconnect%2A>) was released with .NET 8 but isn't currently supported for the Azure SignalR Service. For more information, see [Stateful Reconnect Support? (`Azure/azure-signalr` #1878)](https://github.com/Azure/azure-signalr/issues/1878).
+
+:::moniker-end
+
+:::moniker range="< aspnetcore-8.0"
+
+Consider using the [Azure SignalR Service](xref:signalr/scale#azure-signalr-service), which works in conjunction with the app's Blazor Hub for scaling up to a large number of concurrent SignalR connections. In addition, the service's global reach and high-performance data centers significantly aid in reducing latency due to geography. If your hosting environment already handles these concerns, using the Azure SignalR Service isn't necessary.
+
+:::moniker-end
 
 > [!IMPORTANT]
 > When [WebSockets](https://wikipedia.org/wiki/WebSocket) are disabled, Azure App Service simulates a real-time connection using HTTP Long Polling. HTTP Long Polling is noticeably slower than running with WebSockets enabled, which doesn't use polling to simulate a client-server connection. In the event that Long Polling must be used, you may need to configure the maximum poll interval (`MaxPollIntervalInSeconds`), which defines the maximum poll interval allowed for Long Polling connections in [Azure SignalR Service](#azure-signalr-service) if the service ever falls back from WebSockets to Long Polling. If the next poll request does not come in within `MaxPollIntervalInSeconds`, Azure SignalR Service cleans up the client connection. Note that Azure SignalR Service also cleans up connections when cached waiting to write buffer size is greater than 1 MB to ensure service performance. Default value for `MaxPollIntervalInSeconds` is 5 seconds. The setting is limited to 1-300 seconds.
@@ -263,11 +96,11 @@ We recommend using the [Azure SignalR Service](xref:signalr/scale#azure-signalr-
 > * [Performance guide for Azure SignalR Service](/azure/azure-signalr/signalr-concept-performance#performance-factors)
 > * <xref:signalr/publish-to-azure-web-app>
 
-### Configuration
+The app must support *session affinity*, also called *sticky sessions*, where clients are redirected back to the same server. To support session affinity, an application setting in the Azure portal is automatically configured (**Configuration** > **Application settings**: **Name**: `Azure__SignalR__ServerStickyMode`, **Value**: `Required`). Therefore, you don't need to manually configure the app for session affinity.
 
-To configure an app for the Azure SignalR Service, the app must support *sticky sessions*, where clients are redirected back to the same server when prerendering. The `ServerStickyMode` option or configuration value is set to `Required`. Typically, an app creates the configuration using **one** of the following approaches:
+If you prefer not to use the app setting in Azure (and delete it in the Azure portal), two other approaches for configuring session affinity are (**use either approach, not both**):
 
-* `Program.cs`:
+* Set the option in `Program.cs`:
 
   ```csharp
   builder.Services.AddSignalR().AddAzureSignalR(options =>
@@ -277,22 +110,16 @@ To configure an app for the Azure SignalR Service, the app must support *sticky 
   });
   ```
 
-* Configuration (use **one** of the following approaches):
+* Configure the option in `appsettings.json`:
 
-  * In `appsettings.json`:
-
-    ```json
-    "Azure:SignalR:ServerStickyMode": "Required"
-    ```
-
-  * The app service's **Configuration** > **Application settings** in the Azure portal (**Name**: `Azure__SignalR__ServerStickyMode`, **Value**: `Required`). This approach is adopted for the app automatically if you [provision the Azure SignalR Service](#provision-the-azure-signalr-service).
+  ```json
+  "Azure:SignalR:ServerStickyMode": "Required"
+  ```
 
 > [!NOTE]
-> The following error is thrown by an app that hasn't enabled sticky sessions for Azure SignalR Service:
+> The following error is thrown by an app that hasn't enabled session affinity:
 >
-> > blazor.server.js:1 Uncaught (in promise) Error: Invocation canceled due to the underlying connection being closed.
-
-### Provision the Azure SignalR Service
+> > :::no-loc text="blazor.server.js:1 Uncaught (in promise) Error: Invocation canceled due to the underlying connection being closed.":::
 
 To provision the Azure SignalR Service for an app in Visual Studio:
 
@@ -300,18 +127,36 @@ To provision the Azure SignalR Service for an app in Visual Studio:
 1. Add the **Azure SignalR Service** dependency to the profile. If the Azure subscription doesn't have a pre-existing Azure SignalR Service instance to assign to the app, select **Create a new Azure SignalR Service instance** to provision a new service instance.
 1. Publish the app to Azure.
 
-Provisioning the Azure SignalR Service in Visual Studio automatically [enables *sticky sessions*](#configuration) and adds the SignalR connection string to the app service's configuration.
+Provisioning the Azure SignalR Service in Visual Studio automatically adds the SignalR connection string to the app service's configuration.
+
+## Azure App Service
+
+:::moniker range=">= aspnetcore-8.0"
+
+Hosting a Blazor Web App that uses interactive server-side rendering on Azure App Service requires configuration for Application Request Routing (ARR) affinity and WebSockets. The App Service should also be appropriately globally distributed to reduce UI latency. Using the Azure SignalR Service when hosting on Azure App Service isn't required.
+
+:::moniker-end
+
+:::moniker range="< aspnetcore-8.0"
+
+Hosting a Blazor Server app on Azure App Service requires configuration for Application Request Routing (ARR) affinity and WebSockets. The App Service should also be appropriately globally distributed to reduce UI latency. Using the Azure SignalR Service when hosting on Azure App Service isn't required.
+
+:::moniker-end
+
+1. Use the following guidance to configure the service:
+
+  * [Configure the app in Azure App Service](xref:signalr/publish-to-azure-web-app#configure-the-app-in-azure-app-service).
+  * [App Service Plan Limits](xref:signalr/publish-to-azure-web-app#app-service-plan-limits).
 
 :::moniker range=">= aspnetcore-6.0"
 
-### Scalability on Azure Container Apps
+## Azure Container Apps
 
-Scaling server-side Blazor apps on Azure Container Apps requires specific considerations in addition to using the [Azure SignalR Service](#azure-signalr-service). Due to the way request routing is handled, the ASP.NET Core data protection service must be configured to persist keys in a centralized location that all container instances can access. The keys can be stored in Azure Blob Storage and protected with Azure Key Vault. The data protection service uses the keys to deserialize Razor components.
+For a deeper exploration of scaling server-side Blazor apps on the Azure Container Apps service, see <xref:host-and-deploy/scaling-aspnet-apps/scaling-aspnet-apps>. The tutorial explains how to create and integrate the services required to host apps on Azure Container Apps. Basic steps are also provided in this section.
 
-> [!NOTE]
-> For a deeper exploration of this scenario and scaling container apps, see <xref:host-and-deploy/scaling-aspnet-apps/scaling-aspnet-apps>. The tutorial explains how to create and integrate the services required to host apps on Azure Container Apps. Basic steps are also provided in this section.
+1. Configure Azure Container Apps service for session affinity by following the guidance in [Session Affinity in Azure Container Apps (Azure documentation)](/azure/container-apps/sticky-sessions).
 
-1. To configure the data protection service to use Azure Blob Storage and Azure Key Vault, reference the following NuGet packages:
+1. The ASP.NET Core Data Protection service must be configured to persist keys in a centralized location that all container instances can access. The keys can be stored in Azure Blob Storage and protected with Azure Key Vault. The data protection service uses the keys to deserialize Razor components. To configure the data protection service to use Azure Blob Storage and Azure Key Vault, reference the following NuGet packages:
 
    * [`Azure.Identity`](https://www.nuget.org/packages/Azure.Identity): Provides classes to work with the Azure identity and access management services.
    * [`Microsoft.Extensions.Azure`](https://www.nuget.org/packages/Microsoft.Extensions.Azure): Provides helpful extension methods to perform core Azure configurations.
@@ -345,21 +190,14 @@ Scaling server-side Blazor apps on Azure Container Apps requires specific consid
 
 :::moniker-end
 
-## Azure App Service without the Azure SignalR Service
-
-When the Azure SignalR Service is ***not*** used, the App Service requires configuration for Application Request Routing (ARR) affinity and WebSockets. Clients connect their WebSockets directly to the app, not to the Azure SignalR Service.
-
-Use the following guidance to configure the app:
-
-* [Configure the app in Azure App Service](xref:signalr/publish-to-azure-web-app#configure-the-app-in-azure-app-service).
-* [App Service Plan Limits](xref:signalr/publish-to-azure-web-app#app-service-plan-limits).
-
 ## IIS
 
 When using IIS, enable:
 
 * [WebSockets on IIS](xref:fundamentals/websockets#enabling-websockets-on-iis).
 * [Sticky sessions with Application Request Routing](/iis/extensions/configuring-application-request-routing-arr/http-load-balancing-using-application-request-routing).
+
+For more information, see the guidance and external IIS resource cross-links in <xref:tutorials/publish-to-iis>.
 
 ## Kubernetes
 
@@ -549,10 +387,23 @@ Adopt any of the following strategies to reduce an app's memory usage:
 * Trigger a garbage collection manually to perform a collection during downtime periods.
 * Configure the garbage collection in Workstation mode, which aggressively triggers garbage collection, instead of Server mode.
 
-###  Additional actions
+### Heap size for some mobile device browsers
+
+When building a Blazor app that runs on the client and targets mobile device browsers, especially Safari on iOS, decreasing the maximum memory for the app with the MSBuild property `EmccMaximumHeapSize` may be required. For more information, see <xref:blazor/host-and-deploy/webassembly#decrease-maximum-heap-size-for-some-mobile-device-browsers>.
+
+###  Additional actions and considerations
 
 * Capture a memory dump of the process when memory demands are high and identify the objects are taking the most memory and where are those objects are rooted (what holds a reference to them).
-* .NET in Server mode doesn't release the memory to the OS immediately unless it must do so. For more information on project file (`.csproj`) settings to control this behavior, see [Runtime configuration options for garbage collection](/dotnet/core/runtime-config/garbage-collector).
-* Server GC assumes that your app is the only one running on the system and can use all the system's resources. If the system has 50 GB, the garbage collector seeks to use the full 50 GB of available memory before it triggers a Gen 2 collection.
+* You can examine the statistics on how memory in your app is behaving using `dotnet-counters`. For more information see [Investigate performance counters (dotnet-counters)](/dotnet/core/diagnostics/dotnet-counters).
+* Even when a GC is triggered, .NET holds on to the memory instead of returning it to the OS immediately, as it's likely that it will reuse the memory the near future. This avoids committing and decommitting memory constantly, which is expensive. You'll see this reflected if you use `dotnet-counters` because you'll see the GCs happen and the amount of used memory go down to 0 (zero), but you won't see the working set counter decrease, which is the sign that .NET is holding on to the memory to reuse it. For more information on project file (`.csproj`) settings to control this behavior, see [Runtime configuration options for garbage collection](/dotnet/core/runtime-config/garbage-collector).
+* Server GC doesn't trigger garbage collections until it determines it's absolutely necessary to do so to avoid freezing your app and considers that your app is the only thing running on the machine, so it can use all the memory in the system. If the system has 50 GB, the garbage collector seeks to use the full 50 GB of available memory before it triggers a Gen 2 collection.
+* For information on disconnected circuit retention configuration, see <xref:blazor/fundamentals/signalr#server-side-circuit-handler-options>.
 
-For information on disconnected circuit retention configuration, see <xref:blazor/fundamentals/signalr#server-side-circuit-handler-options>.
+### Measuring memory
+
+* Publish the app in Release configuration.
+* Run a published version of the app.
+* Don't attach a debugger to the running app.
+* Does triggering a Gen 2 forced, compacting collection (`GC.Collect(2, GCCollectionMode.Aggressive | GCCollectionMode.Forced, blocking: true, compacting: true))` free the memory?
+* Consider if your app is allocating objects on the large object heap.
+* Are you testing the memory growth after the app is warmed up with requests and processing? Typically, there are caches that are populated when code executes for the first time that add a constant amount of memory to the footprint of the app.

@@ -33,7 +33,7 @@ Components inherited from <xref:Microsoft.AspNetCore.Components.ComponentBase> s
   
   [!INCLUDE[](~/includes/aspnetcore-repo-ref-source-links.md)]
 
-* The component's [`ShouldRender` method](#suppress-ui-refreshing-shouldrender) returns `false`.
+* The override of the component's [`ShouldRender` method](#suppress-ui-refreshing-shouldrender) returns `false` (the default `ComponentBase` implementation always returns `true`).
 
 ## Control the rendering flow
 
@@ -45,13 +45,13 @@ For more information on the performance implications of the framework's conventi
 
 ## Streaming rendering
 
-Use *streaming rendering* with [interactive server-side rendering (interactive SSR)](xref:blazor/components/render-modes) to stream content updates on the response stream and improve the user experience for components that perform long-running asynchronous tasks to fully render.
+Use *streaming rendering* with [static server-side rendering (static SSR)](xref:blazor/components/render-modes) or prerendering to stream content updates on the response stream and improve the user experience for components that perform long-running asynchronous tasks to fully render.
 
 For example, consider a component that makes a long-running database query or web API call to render data when the page loads. Normally, asynchronous tasks executed as part of rendering a server-side component must complete before the rendered response is sent, which can delay loading the page. Any significant delay in rendering the page harms the user experience. To improve the user experience, streaming rendering initially renders the entire page quickly with placeholder content while asynchronous operations execute. After the operations are complete, the updated content is sent to the client on the same response connection and patched into the DOM.
 
 Streaming rendering requires the server to avoid buffering the output. The response data must flow to the client as the data is generated. For hosts that enforce buffering, streaming rendering degrades gracefully, and the page loads without streaming rendering.
 
-To stream content updates when using static server-side rendering (static SSR), apply the `[StreamRendering(true)]` attribute to the component. Streaming rendering must be explicitly enabled because streamed updates may cause content on the page to shift. Components without the attribute automatically adopt streaming rendering if the parent component uses the feature. Pass `false` to the attribute in a child component to disable the feature at that point and further down the component subtree. The attribute is functional when applied to components supplied by a [Razor class library](xref:blazor/components/class-libraries).
+To stream content updates when using static server-side rendering (static SSR) or prerendering, apply the `[StreamRendering(true)]` attribute to the component. Streaming rendering must be explicitly enabled because streamed updates may cause content on the page to shift. Components without the attribute automatically adopt streaming rendering if the parent component uses the feature. Pass `false` to the attribute in a child component to disable the feature at that point and further down the component subtree. The attribute is functional when applied to components supplied by a [Razor class library](xref:blazor/components/class-libraries).
 
 The following example is based on the `Weather` component in an app created from the [Blazor Web App project template](xref:blazor/project-structure#blazor-web-app). The call to <xref:System.Threading.Tasks.Task.Delay%2A?displayProperty=nameWithType> simulates retrieving weather data asynchronously. The component initially renders placeholder content ("`Loading...`") without waiting for the asynchronous delay to complete. When the asynchronous delay completes and the weather data content is generated, the content is streamed to the response and patched into the weather forecast table.
 
@@ -256,9 +256,9 @@ One way to deal with this scenario is to provide a *state management* class, oft
 
 For approaches to manage state, see the following resources:
 
-* [Server-side in-memory state container service](xref:blazor/state-management?pivots=server#in-memory-state-container-service-server) ([client-side equivalent](xref:blazor/state-management?pivots=webassembly#in-memory-state-container-service-wasm)) section of the *State management* article.
-* [Pass data across a component hierarchy](xref:blazor/components/cascading-values-and-parameters#pass-data-across-a-component-hierarchy) using cascading values and parameters.
 * [Bind across more than two components](xref:blazor/components/data-binding#bind-across-more-than-two-components) using data bindings.
+* [Pass data across a component hierarchy](xref:blazor/components/cascading-values-and-parameters#pass-data-across-a-component-hierarchy) using cascading values and parameters.
+* [Server-side in-memory state container service](xref:blazor/state-management?pivots=server#in-memory-state-container-service-server) ([client-side equivalent](xref:blazor/state-management?pivots=webassembly#in-memory-state-container-service-wasm)) section of the *State management* article.
 
 For the state manager approach, C# events are outside the Blazor rendering pipeline. Call <xref:Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged%2A> on other components you wish to rerender in response to the state manager's events.
 

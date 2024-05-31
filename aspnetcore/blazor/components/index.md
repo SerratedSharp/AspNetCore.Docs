@@ -20,6 +20,18 @@ Blazor apps are built using *Razor components*, informally known as *Blazor comp
 
 Components render into an in-memory representation of the browser's [Document Object Model (DOM)](https://developer.mozilla.org/docs/Web/API/Document_Object_Model/Introduction) called a *render tree*, which is used to update the UI in a flexible and efficient way.
 
+Although "Razor components" shares some naming with other ASP.NET Core content-rendering technologies, Razor components must be distinguished from the following different features in ASP.NET Core:
+
+* [Razor views](xref:tutorials/first-mvc-app/adding-view), which are [Razor-based](xref:mvc/views/razor) markup pages for MVC apps.
+* [View components](xref:mvc/views/view-components), which are for rendering chunks of content rather than whole responses in Razor Pages and MVC apps.
+
+:::moniker range=">= aspnetcore-8.0"
+
+> [!IMPORTANT]
+> When using a Blazor Web App, most of the Blazor documentation example components ***require*** interactivity to function and demonstrate the concepts covered by the articles. When you test an example component provided by an article, make sure that either the app adopts global interactivity or the component adopts an interactive render mode. More information on this subject is provided by <xref:blazor/components/render-modes>, which is the next article in the table of contents after this article.
+
+:::moniker-end
+
 ## Component classes
 
 Components are implemented using a combination of C# and HTML markup in [Razor](xref:mvc/views/razor) component files with the `.razor` file extension.
@@ -82,6 +94,8 @@ Components use [Razor syntax](xref:mvc/views/razor). Two Razor features are exte
   ```razor
   <input @bind="episodeId" />
   ```
+
+  You can prefix directive attribute values with the at symbol (`@`) for non-explicit Razor expressions (`@bind="@episodeId"`), but we don't recommend it, and the docs don't adopt the approach in examples. 
 
 Directives and directive attributes used in components are explained further in this article and other articles of the Blazor documentation set. For general information on Razor syntax, see <xref:mvc/views/razor>.
 
@@ -1112,6 +1126,8 @@ For more information, see the *Route parameters* section of <xref:blazor/fundame
 
 :::moniker-end
 
+[!INCLUDE[](~/blazor/includes/compression-with-untrusted-data.md)]
+
 ## Child content render fragments
 
 Components can set the content of another component. The assigning component provides the content between the child component's opening and closing tags.
@@ -1296,7 +1312,7 @@ Consider the following `ReferenceChild` component that logs a message when its `
 
 :::moniker-end
 
-A component reference is only populated after the component is rendered and its output includes `ReferenceChild`'s element. Until the component is rendered, there's nothing to reference. Don't attempt to call a referenced component method to an event handler directly (for example, `@onclick="childComponent!.ChildMethod(5)"`) because the reference variable may not be assigned at the time click event is assigned.
+A component reference is only populated after the component is rendered and its output includes `ReferenceChild`'s element. Until the component is rendered, there's nothing to reference. Don't attempt to call a referenced component method to an event handler directly (for example, `@onclick="childComponent!.ChildMethod(5)"`) because the reference variable may not be assigned at the time the click event is assigned.
 
 To manipulate component references after the component has finished rendering, use the [`OnAfterRender` or `OnAfterRenderAsync` methods](xref:blazor/components/lifecycle#after-component-render-onafterrenderasync).
 
@@ -1348,48 +1364,17 @@ Attributes can be applied to components with the [`@attribute`][7] directive. Th
 @attribute [Authorize]
 ```
 
-## Conditional HTML element attributes
+## Conditional HTML element attributes and DOM properties
 
-HTML element attribute properties are conditionally set based on the .NET value. If the value is `false` or `null`, the property isn't set. If the value is `true`, the property is set.
+Blazor adopts the following general behaviors:
 
-In the following example, `IsCompleted` determines if the `<input>` element's `checked` property is set.
+* For HTML attributes, Blazor sets or removes the attribute conditionally based on the .NET value. If the .NET value is `false` or `null`, the attribute isn't set or is removed if it was previously set.
+* For DOM properties, such as `checked` or `value`, Blazor sets the DOM property based on the .NET value. If the .NET value is `false` or `null`, the DOM property is reset to a default value.
 
-`ConditionalAttribute.razor`:
-
-:::moniker range=">= aspnetcore-8.0"
-
-:::code language="razor" source="~/../blazor-samples/8.0/BlazorSample_BlazorWebApp/Components/Pages/ConditionalAttribute.razor":::
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-7.0 < aspnetcore-8.0"
-
-:::code language="razor" source="~/../blazor-samples/7.0/BlazorSample_WebAssembly/Pages/index/ConditionalAttribute.razor":::
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0 < aspnetcore-7.0"
-
-:::code language="razor" source="~/../blazor-samples/6.0/BlazorSample_WebAssembly/Pages/index/ConditionalAttribute.razor":::
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-5.0 < aspnetcore-6.0"
-
-:::code language="razor" source="~/../blazor-samples/5.0/BlazorSample_WebAssembly/Pages/index/ConditionalAttribute.razor":::
-
-:::moniker-end
-
-:::moniker range="< aspnetcore-5.0"
-
-:::code language="razor" source="~/../blazor-samples/3.1/BlazorSample_WebAssembly/Pages/index/ConditionalAttribute.razor":::
-
-:::moniker-end
-
-For more information, see <xref:mvc/views/razor>.
+Which Razor syntax attributes correspond to HTML attributes and which ones correspond to DOM properties remains undocumented because it's an implementation detail that might change without notice.
 
 > [!WARNING]
-> Some HTML attributes, such as [`aria-pressed`](https://developer.mozilla.org/docs/Web/Accessibility/ARIA/Roles/button_role#Toggle_buttons), don't function properly when the .NET type is a `bool`. In those cases, use a `string` type instead of a `bool`.
+> Some HTML attributes, such as [`aria-pressed`](https://developer.mozilla.org/docs/Web/Accessibility/ARIA/Roles/button_role#Toggle_buttons), must have a string value of either "true" or "false". Since they require a string value and not a boolean, you must use a .NET `string` and not a `bool` for their value. This is a requirement set by browser DOM APIs.
 
 ## Raw HTML
 

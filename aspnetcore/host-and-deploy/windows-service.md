@@ -3,7 +3,7 @@ title: Host ASP.NET Core in a Windows Service
 author: tdykstra
 description: Learn how to host an ASP.NET Core app in a Windows Service.
 monikerRange: '>= aspnetcore-3.1'
-ms.author: riande
+ms.author: tdykstra
 ms.custom: mvc
 ms.date: 12/19/2022
 uid: host-and-deploy/windows-service
@@ -94,7 +94,7 @@ Self-contained deployment (SCD) doesn't rely on the presence of a shared framewo
 A Windows [Runtime Identifier (RID)](/dotnet/core/rid-catalog) is included in the `<PropertyGroup>` that contains the target framework:
 
 ```xml
-<RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 ```
 
 To publish for multiple RIDs:

@@ -4,7 +4,7 @@ author: rick-anderson
 description: Learn about the new features in ASP.NET Core 8.0.
 ms.author: riande
 ms.custom: mvc
-ms.date: 11/7/2023
+ms.date: 05/02/2024
 uid: aspnetcore-8
 ---
 # What's new in ASP.NET Core 8.0
@@ -42,7 +42,7 @@ For more information, see <xref:blazor/components/class-libraries-with-static-ss
 
 We've added a new article that discusses some of the common HTTP caching issues that can occur when upgrading Blazor apps across major versions and how to address HTTP caching issues.
 
-For more information, see <xref:blazor/http-caching-issues>.
+For more information, see <xref:blazor/host-and-deploy/webassembly-caching/http-caching-issues>.
 
 ### New Blazor Web App template
 
@@ -364,8 +364,8 @@ The following example shows the ***new approach*** for assigning values that are
 ```javascript
 var connection = new signalR.HubConnectionBuilder()
   .withUrl("/chatHub")
-  .withServerTimeoutInMilliseconds(60000)
-  .withKeepAliveIntervalInMilliseconds(30000)
+  .withServerTimeout(60000)
+  .withKeepAlive(30000)
   .build();
 ```
 

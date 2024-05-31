@@ -5,7 +5,7 @@ description: Learn how to secure a Blazor WebAssembly App with OpenID Connect (O
 monikerRange: '>= aspnetcore-8.0'
 ms.author: riande
 ms.custom: mvc
-ms.date: 03/07/2024
+ms.date: 05/28/2024
 uid: blazor/security/blazor-web-app-oidc
 zone_pivot_groups: blazor-web-app-oidc-specification
 ---
@@ -47,6 +47,9 @@ Access the sample apps through the latest version folder from the repository's r
 The `BlazorWebAppOidc` project is the server-side project of the Blazor Web App.
 
 The `BlazorWebAppOidc.http` file can be used for testing the weather data request. Note that the `BlazorWebAppOidc` project must be running to test the endpoint, and the endpoint is hardcoded into the file. For more information, see <xref:test/http-files>.
+
+> [!NOTE]
+> The server project uses <xref:Microsoft.AspNetCore.Http.IHttpContextAccessor>/<xref:Microsoft.AspNetCore.Http.HttpContext>, but never for interactively-rendered components. For more information, see <xref:blazor/security/server/interactive-server-side-rendering#ihttpcontextaccessorhttpcontext-in-razor-components>.
 
 ### Configuration
 
@@ -144,6 +147,9 @@ The following <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConn
 
 * <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.MapInboundClaims%2A> and configuration of <xref:Microsoft.IdentityModel.Tokens.TokenValidationParameters.NameClaimType%2A> and <xref:Microsoft.IdentityModel.Tokens.TokenValidationParameters.RoleClaimType%2A>: Many OIDC servers use "`name`" and "`role`" rather than the SOAP/WS-Fed defaults in <xref:System.Security.Claims.ClaimTypes>. When <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.MapInboundClaims%2A> is set to `false`, the handler doesn't perform claims mappings and the claim names from the JWT are used directly by the app. The following example manually maps the name and role claims:
 
+> [!NOTE]
+> <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.MapInboundClaims%2A> must be set to `false` for most OIDC providers, which prevents renaming claims.
+
   ```csharp
   oidcOptions.MapInboundClaims = false;
   oidcOptions.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.Name;
@@ -159,7 +165,7 @@ The following <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConn
     > :::no-loc text="https://localhost/signin-oidc":::
 
     > [!NOTE]
-    > A port isn't required for `localhost` addresses.
+    > A port isn't required for `localhost` addresses when using Microsoft Entra ID. Most other OIDC providers require a correct port.
 
   * <xref:Microsoft.AspNetCore.Builder.OpenIdConnectOptions.SignedOutCallbackPath%2A>: The request path within the app's base path where the user agent is returned after sign out from the identity provider.
 
@@ -168,7 +174,7 @@ The following <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConn
     > :::no-loc text="https://localhost/signout-callback-oidc":::
 
     > [!NOTE]
-    > A port isn't required for `localhost` addresses.
+    > A port isn't required for `localhost` addresses when using Microsoft Entra ID. Most other OIDC providers require a correct port.
   
     > [!NOTE]
     > If using Microsoft Identity Web, the provider currently only redirects back to the <xref:Microsoft.AspNetCore.Builder.OpenIdConnectOptions.SignedOutCallbackPath%2A> if the `microsoftonline.com` Authority (`https://login.microsoftonline.com/{TENANT ID}/v2.0/`) is used. This limitation doesn't exist if you can use the "common" Authority with Microsoft Identity Web. For more information, see [postLogoutRedirectUri not working when authority url contains a tenant ID (`AzureAD/microsoft-authentication-library-for-js` #5783)](https://github.com/AzureAD/microsoft-authentication-library-for-js/issues/5783).
@@ -180,7 +186,7 @@ The following <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConn
     > :::no-loc text="https://localhost/signout-oidc":::
 
     > [!NOTE]
-    > A port isn't required for `localhost` addresses.
+    > A port isn't required for `localhost` addresses when using Microsoft Entra ID. Most other OIDC providers require a correct port.
 
   ```csharp
   oidcOptions.CallbackPath = new PathString("{PATH}");
@@ -245,10 +251,13 @@ The following specification is covered:
   * Aspire improves the experience of building .NET cloud-native apps. It provides a consistent, opinionated set of tools and patterns for building and running distributed apps.
   * YARP (Yet Another Reverse Proxy) is a library used to create a reverse proxy server.
 
-## Preview package warning
+<!-- UPDATE 9.0 Remove the following line at either 9.0 or 10.0 ... -->
 
-> [!WARNING]
-> Technologies and packages used by the `BlazorWebAppOidcBff` sample app and described in this article are in ***preview*** release at this time. The article's content, the API, and the sample app aren't supported at this time and aren't currently recommended for production use. The sample app and guidance are subject to change without notice.
+For more information on .NET Aspire, see [General Availability of .NET Aspire: Simplifying .NET Cloud-Native Development (May, 2024)](https://devblogs.microsoft.com/dotnet/dotnet-aspire-general-availability/).
+
+## Prerequisite
+
+[.NET Aspire](/dotnet/aspire/get-started/aspire-overview) requires [Visual Studio](https://visualstudio.microsoft.com/) version 17.10 or later.
 
 ## Sample app
 
@@ -271,11 +280,16 @@ For more information on using .NET Aspire and details on the `.AppHost` and `.Se
 
 Confirm that you've met the prerequisites for .NET Aspire. For more information, see the *Prerequisites* section of [Quickstart: Build your first .NET Aspire app](/dotnet/aspire/get-started/build-your-first-aspire-app?tabs=visual-studio#prerequisites).
 
+The sample app only configures an insecure HTTP launch profile (`http`) for use during development testing. For more information, including an example of insecure and secure launch settings profiles, see [Allow unsecure transport in .NET Aspire (.NET Aspire documentation)](/dotnet/aspire/troubleshooting/allow-unsecure-transport).
+
 ## Server-side Blazor Web App project (`BlazorWebAppOidc`)
 
 The `BlazorWebAppOidc` project is the server-side project of the Blazor Web App. The project uses [YARP](https://microsoft.github.io/reverse-proxy/) to proxy requests to a weather forecast endpoint in the backend web API project (`MinimalApiJwt`) with the `access_token` stored in the authentication cookie.
 
 The `BlazorWebAppOidc.http` file can be used for testing the weather data request. Note that the `BlazorWebAppOidc` project must be running to test the endpoint, and the endpoint is hardcoded into the file. For more information, see <xref:test/http-files>.
+
+> [!NOTE]
+> The server project uses <xref:Microsoft.AspNetCore.Http.IHttpContextAccessor>/<xref:Microsoft.AspNetCore.Http.HttpContext>, but never for interactively-rendered components. For more information, see <xref:blazor/security/server/interactive-server-side-rendering#ihttpcontextaccessorhttpcontext-in-razor-components>.
 
 ### Configuration
 
@@ -313,20 +327,30 @@ The following <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConn
 * Scopes for obtaining weather data from the web API (<xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.Scope%2A>): The `Weather.Get` scope is configured in the Azure or Entra portal under **Expose an API**. This is necessary for backend web API project (`MinimalApiJwt`) to validate the access token with bearer JWT.
 
   ```csharp
-  oidcOptions.Scope.Add("{SCOPE}");
+  oidcOptions.Scope.Add("{APP ID URI}/{API NAME}");
   ```
 
-  Example (`{SCOPE}`):
+  Example:
+
+  * App ID URI (`{APP ID URI}`): `https://{DIRECTORY NAME}.onmicrosoft.com/{CLIENT ID}`
+    * Directory Name (`{DIRECTORY NAME}`): `contoso`
+    * Application (Client) Id (`{CLIENT ID}`): `4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f`
+  * Scope configured for weather data from `MinimalApiJwt` (`{API NAME}`): `Weather.Get`
 
   ```csharp
   oidcOptions.Scope.Add("https://contoso.onmicrosoft.com/4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f/Weather.Get");
   ```
 
-  The preceding example uses:
+  The preceding example pertains to an app registered in a tenant with an AAD B2C tenant type. If the app is registered in an ME-ID tenant, the App ID URI is different, thus the scope is different.
 
-  * Directory name: `contoso`
-  * Client Id: `4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f`
-  * Scope configured for weather data from `MinimalApiJwt`: `Weather.Get`
+  Example:
+
+  * App ID URI (`{APP ID URI}`): `api://{CLIENT ID}` with Application (Client) Id (`{CLIENT ID}`): `4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f`
+  * Scope configured for weather data from `MinimalApiJwt` (`{API NAME}`): `Weather.Get`
+
+  ```csharp
+  oidcOptions.Scope.Add("api://4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f/Weather.Get");
+  ```
 
 * <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.Authority%2A> and <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.ClientId%2A>: Sets the Authority and Client ID for OIDC calls.
 
@@ -391,6 +415,9 @@ The following <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConn
 
 * <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.MapInboundClaims%2A> and configuration of <xref:Microsoft.IdentityModel.Tokens.TokenValidationParameters.NameClaimType%2A> and <xref:Microsoft.IdentityModel.Tokens.TokenValidationParameters.RoleClaimType%2A>: Many OIDC servers use "`name`" and "`role`" rather than the SOAP/WS-Fed defaults in <xref:System.Security.Claims.ClaimTypes>. When <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.MapInboundClaims%2A> is set to `false`, the handler doesn't perform claims mappings and the claim names from the JWT are used directly by the app. The following example manually maps the name and role claims:
 
+> [!NOTE]
+> <xref:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.MapInboundClaims%2A> must be set to `false` for most OIDC providers, which prevents renaming claims.
+  
   ```csharp
   oidcOptions.MapInboundClaims = false;
   oidcOptions.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.Name;
@@ -487,15 +514,28 @@ Configure the project in the <xref:Microsoft.AspNetCore.Authentication.JwtBearer
   In the Azure or Entra portal: Match the value to just the path of the **Application ID URI** configured when adding the `Weather.Get` scope under **Expose an API**:
 
   ```csharp
-  jwtOptions.Audience = "{CLIENT ID}";
+  jwtOptions.Audience = "{APP ID URI}";
   ```
 
   Example:
 
-  Client Id (`{CLIENT ID}`): `4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f`
+  App ID URI (`{APP ID URI}`): `https://{DIRECTORY NAME}.onmicrosoft.com/{CLIENT ID}`:
+  
+  * Directory Name (`{DIRECTORY NAME}`): `contoso`
+  * Application (Client) Id (`{CLIENT ID}`): `4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f`
 
   ```csharp
-  jwtOptions.Audience = "4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f";
+  jwtOptions.Audience = "https://contoso.onmicrosoft.com/4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f";
+  ```
+
+  The preceding example pertains to an app registered in a tenant with an AAD B2C tenant type. If the app is registered in an ME-ID tenant, the App ID URI is different, thus the audience is different.
+
+  Example:
+
+  App ID URI (`{APP ID URI}`): `api://{CLIENT ID}` with Application (Client) Id (`{CLIENT ID}`): `4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f`
+
+  ```csharp
+  jwtOptions.Audience = "api://4ba4de56-9cef-45d9-83fa-a4c18f9f5f0f";
   ```
 
 * <xref:Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions.Authority%2A>: Sets the Authority for making OpenID Connect calls. Match the value to the Authority configured for the OIDC handler in `BlazorWebAppOidc/Program.cs`:
@@ -510,6 +550,12 @@ Configure the project in the <xref:Microsoft.AspNetCore.Authentication.JwtBearer
 
   ```csharp
   jwtOptions.Authority = "https://login.microsoftonline.com/a3942615-d115-4eb7-bc84-9974abcf5064/v2.0/";
+  ```
+
+  The preceding example pertains to an app registered in a tenant with an AAD B2C tenant type. If the app is registered in an ME-ID tenant, the authority should match the issurer (`iss`) of the JWT returned by the identity provider:
+
+  ```csharp
+  jwtOptions.Authority = "https://sts.windows.net/a3942615-d115-4eb7-bc84-9974abcf5064/";
   ```
 
 ### Minimal API for weather data
@@ -570,12 +616,24 @@ The important changes to the `LogInOrOut` component are demonstrated in the foll
 </div>
 ```
 
+## Cryptographic nonce
+
+A *nonce* is a string value that associates a client's session with an ID token to mitigate [replay attacks](https://developer.mozilla.org/docs/Glossary/Replay_attack).
+
+If you receive a nonce error during authentication development and testing, use a new InPrivate/incognito browser session for each test run, no matter how small the change made to the app or test user because stale cookie data can lead to a nonce error. For more information, see the [Cookies and site data](#cookies-and-site-data) section.
+
+A nonce isn't required or used when a refresh token is exchanged for a new access token. In the sample app, the `CookieOidcRefresher` (`CookieOidcRefresher.cs`) deliberately sets <xref:Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectProtocolValidator.RequireNonce?displayProperty=nameWithType> to `false`.
+
 ## Troubleshoot
 
 [!INCLUDE[](~/blazor/security/includes/troubleshoot-server.md)]
 
 ## Additional resources
 
+<!-- UPDATE 10.0 The PU has scheduled dotnet/aspnetcore #55213
+                 for investigation/resolution at .NET 10 -->
+
 * [`AzureAD/microsoft-identity-web` GitHub repository](https://github.com/AzureAD/microsoft-identity-web/wiki): Helpful guidance on implementing Microsoft Identity Web for Microsoft Entra ID and Azure Active Directory B2C for ASP.NET Core apps, including links to sample apps and related Azure documentation. Currently, Blazor Web Apps aren't explicitly addressed by the Azure documentation, but the setup and configuration of a Blazor Web App for ME-ID and Azure hosting is the same as it is for any ASP.NET Core web app.
 * [`AuthenticationStateProvider` service](xref:blazor/security/index#authenticationstateprovider-service)
 * [Manage authentication state in Blazor Web Apps](xref:blazor/security/server/index#manage-authentication-state-in-blazor-web-apps)
+* [Refresh token during http request in Blazor Interactive Server with OIDC (`dotnet/aspnetcore` #55213)](https://github.com/dotnet/aspnetcore/issues/55213)

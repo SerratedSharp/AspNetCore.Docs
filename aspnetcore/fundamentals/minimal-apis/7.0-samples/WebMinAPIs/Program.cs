@@ -490,7 +490,6 @@ var app = builder.Build();
 app.MapPost("/products", (Product? product) => { });
 
 app.Run();
-
 // </snippet_op3>
 internal class Product
 {
@@ -643,7 +642,7 @@ var app = builder.Build();
 var proxyClient = new HttpClient();
 app.MapGet("/pokemon", async () => 
 {
-    var stream = await proxyClient.GetStreamAsync("http://consoto/pokedex.json");
+    var stream = await proxyClient.GetStreamAsync("http://contoso/pokedex.json");
     // Proxy the response as JSON
     return Results.Stream(stream, "application/json");
 });

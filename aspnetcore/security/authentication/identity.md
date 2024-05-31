@@ -4,7 +4,7 @@ author: rick-anderson
 description: Use Identity with an ASP.NET Core app. Learn how to set password requirements (RequireDigit, RequiredLength, RequiredUniqueChars, and more).
 monikerRange: '>= aspnetcore-3.0'
 ms.author: riande
-ms.date: 03/21/2022
+ms.date: 04/26/2024
 uid: security/authentication/identity
 ---
 # Introduction to Identity on ASP.NET Core
@@ -48,7 +48,7 @@ Create an ASP.NET Core Web Application project with Individual User Accounts.
 * Select the **ASP.NET Core Web App** template. Name the project **WebApp1** to have the same namespace as the project download. Click **OK**.
 * In the **Authentication type** input,  select  **Individual User Accounts**.
 
-# [.NET Core CLI](#tab/netcore-cli)
+# [.NET CLI](#tab/net-cli)
 
 ```dotnetcli
 dotnet new webapp --auth Individual -o WebApp1
@@ -78,7 +78,7 @@ Run the following command in the Package Manager Console (PMC):
 
 `Update-Database`
 
-# [.NET Core CLI](#tab/netcore-cli)
+# [.NET CLI](#tab/net-cli)
 
 Migrations are not necessary at this step when using SQLite.
 
@@ -125,7 +125,7 @@ For more information on `IdentityOptions`, see <xref:Microsoft.AspNetCore.Identi
 
 Add the `Register`, `Login`, `LogOut`, and `RegisterConfirmation` files. Follow the [Scaffold identity into a Razor project with authorization](xref:security/authentication/scaffold-identity#scaffold-identity-into-a-razor-project-with-authorization) instructions to generate the code shown in this section.
 
-# [.NET Core CLI](#tab/netcore-cli)
+# [.NET CLI](#tab/net-cli)
 
 If you created the project with name **WebApp1**, and you're not using SQLite, run the following commands. Otherwise, use the correct namespace for the `ApplicationDbContext`:
 
@@ -299,7 +299,7 @@ Create an ASP.NET Core Web Application project with Individual User Accounts.
 * Select an ASP.NET Core **Web Application**, then select **Change Authentication**.
 * Select **Individual User Accounts** and click **OK**.
 
-# [.NET Core CLI](#tab/netcore-cli)
+# [.NET CLI](#tab/net-cli)
 
 ```dotnetcli
 dotnet new webapp --auth Individual -o WebApp1
@@ -329,7 +329,7 @@ Run the following command in the Package Manager Console (PMC):
 
 `PM> Update-Database`
 
-# [.NET Core CLI](#tab/netcore-cli)
+# [.NET CLI](#tab/net-cli)
 
 Migrations are not necessary at this step when using SQLite.
 
@@ -393,7 +393,7 @@ For more information on `IdentityOptions` and `Startup`, see <xref:Microsoft.Asp
 
 Add the `Register`, `Login`, `LogOut`, and `RegisterConfirmation` files. Follow the [Scaffold identity into a Razor project with authorization](xref:security/authentication/scaffold-identity#scaffold-identity-into-a-razor-project-with-authorization) instructions to generate the code shown in this section.
 
-# [.NET Core CLI](#tab/netcore-cli)
+# [.NET CLI](#tab/net-cli)
 
 If you created the project with name **WebApp1**, and you're not using SQLite, run the following commands. Otherwise, use the correct namespace for the `ApplicationDbContext`:
 

@@ -89,7 +89,7 @@ Permissible authentication values for the `{AUTHENTICATION}` placeholder are sho
 
 For more information, see the [`dotnet new`](/dotnet/core/tools/dotnet-new) command in the .NET Core Guide.
 
-# [.NET Core CLI](#tab/netcore-cli/)
+# [.NET CLI](#tab/net-cli/)
 
 When issuing the .NET CLI command to create and configure the server-side Blazor app, indicate the authentication mechanism with the `-au|--auth` option:
 
@@ -159,7 +159,9 @@ The template handles the following:
 
 To inspect the Blazor framework's Identity components, access them in the `Pages` and `Shared` folders of the [`Account` folder in the Blazor Web App project template (reference source)](https://github.com/dotnet/aspnetcore/tree/main/src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWeb-CSharp/Components/Account).
 
-When you choose the Interactive WebAssembly or Interactive Auto render modes, the server handles all authentication and authorization requests, and the Identity components remain on the server in the Blazor Web App's main project. The project template includes a [`PersistentAuthenticationStateProvider` class (reference source)](https://github.com/dotnet/aspnetcore/blob/main/src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWeb-CSharp.Client/PersistentAuthenticationStateProvider.cs) in the `.Client` project to synchronize the user's authentication state between the server and the browser. The class is a custom implementation of <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>. The provider uses the <xref:Microsoft.AspNetCore.Components.PersistentComponentState> class to prerender the authentication state and persist it to the page.
+When you choose the Interactive WebAssembly or Interactive Auto render modes, the server handles all authentication and authorization requests, and the Identity components render statically on the server in the Blazor Web App's main project. The project template includes a [`PersistentAuthenticationStateProvider` class (reference source)](https://github.com/dotnet/aspnetcore/blob/main/src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWeb-CSharp.Client/PersistentAuthenticationStateProvider.cs) in the `.Client` project to synchronize the user's authentication state between the server and the browser. The class is a custom implementation of <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>. The provider uses the <xref:Microsoft.AspNetCore.Components.PersistentComponentState> class to prerender the authentication state and persist it to the page.
+
+Blazor Identity depends on <xref:Microsoft.EntityFrameworkCore.DbContext> instances not [created by a factory](xref:blazor/blazor-ef-core#new-dbcontext-instances), which is intentional because <xref:Microsoft.EntityFrameworkCore.DbContext> is sufficient for the project template's Identity components to render statically without supporting interactivity.
 
 In the main project of a Blazor Web App, the authentication state provider is named either [`IdentityRevalidatingAuthenticationStateProvider` (reference source)](https://github.com/dotnet/aspnetcore/blob/main/src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWeb-CSharp/Components/Account/IdentityRevalidatingAuthenticationStateProvider.cs) (Server interactivity solutions only) or [`PersistingRevalidatingAuthenticationStateProvider` (reference source)](https://github.com/dotnet/aspnetcore/blob/main/src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWeb-CSharp/Components/Account/PersistingRevalidatingAuthenticationStateProvider.cs) (WebAssembly or Auto interactivity solutions).
 
@@ -229,14 +231,14 @@ If the app requires a custom provider, implement <xref:Microsoft.AspNetCore.Comp
 
 In the following example, all users are authenticated with the username `mrfibuli`.
 
-`CustomAuthenticationStateProvider.cs`:
+`CustomAuthStateProvider.cs`:
 
 ```csharp
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 
-public class CustomAuthenticationStateProvider : AuthenticationStateProvider
+public class CustomAuthStateProvider : AuthenticationStateProvider
 {
     public override Task<AuthenticationState> GetAuthenticationStateAsync()
     {
@@ -254,22 +256,21 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
 :::moniker range=">= aspnetcore-8.0"
 
-The `CustomAuthenticationStateProvider` service is registered in the `Program` file:
+The `CustomAuthStateProvider` service is registered in the `Program` file:
 
 ```csharp
 using Microsoft.AspNetCore.Components.Authorization;
 
 ...
 
-builder.Services.AddScoped<AuthenticationStateProvider, 
-    CustomAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 ```
 
 :::moniker-end
 
 :::moniker range=">= aspnetcore-6.0 < aspnetcore-8.0"
 
-The `CustomAuthenticationStateProvider` service is registered in the `Program` file ***after*** the call to <xref:Microsoft.Extensions.DependencyInjection.ComponentServiceCollectionExtensions.AddServerSideBlazor%2A>:
+The `CustomAuthStateProvider` service is registered in the `Program` file ***after*** the call to <xref:Microsoft.Extensions.DependencyInjection.ComponentServiceCollectionExtensions.AddServerSideBlazor%2A>:
 
 ```csharp
 using Microsoft.AspNetCore.Components.Authorization;
@@ -280,15 +281,14 @@ builder.Services.AddServerSideBlazor();
 
 ...
 
-builder.Services.AddScoped<AuthenticationStateProvider, 
-    CustomAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 ```
 
 :::moniker-end
 
 :::moniker range="< aspnetcore-6.0"
 
-The `CustomAuthenticationStateProvider` service is registered in `Startup.ConfigureServices` of `Startup.cs` ***after*** the call to <xref:Microsoft.Extensions.DependencyInjection.ComponentServiceCollectionExtensions.AddServerSideBlazor%2A>:
+The `CustomAuthStateProvider` service is registered in `Startup.ConfigureServices` of `Startup.cs` ***after*** the call to <xref:Microsoft.Extensions.DependencyInjection.ComponentServiceCollectionExtensions.AddServerSideBlazor%2A>:
 
 ```csharp
 using Microsoft.AspNetCore.Components.Authorization;
@@ -299,8 +299,7 @@ services.AddServerSideBlazor();
 
 ...
 
-services.AddScoped<AuthenticationStateProvider, 
-    CustomAuthenticationStateProvider>();
+services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 ```
 
 :::moniker-end
@@ -374,16 +373,16 @@ A [custom `AuthenticationStateProvider`](#implement-a-custom-authenticationstate
 
 The following example is based on implementing a custom <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider> by following the guidance in the [Implement a custom `AuthenticationStateProvider`](#implement-a-custom-authenticationstateprovider) section.
 
-The following `CustomAuthenticationStateProvider` implementation exposes a custom method, `AuthenticateUser`, to sign in a user and notify consumers of the authentication state change.
+The following `CustomAuthStateProvider` implementation exposes a custom method, `AuthenticateUser`, to sign in a user and notify consumers of the authentication state change.
 
-`CustomAuthenticationStateProvider.cs`:
+`CustomAuthStateProvider.cs`:
 
 ```csharp
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 
-public class CustomAuthenticationStateProvider : AuthenticationStateProvider
+public class CustomAuthStateProvider : AuthenticationStateProvider
 {
     public override Task<AuthenticationState> GetAuthenticationStateAsync()
     {
@@ -412,7 +411,7 @@ In a component:
 
 * Inject <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>.
 * Add a field to hold the user's identifier.
-* Add a button and a method to cast the <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider> to `CustomAuthenticationStateProvider` and call `AuthenticateUser` with the user's identifier.
+* Add a button and a method to cast the <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider> to `CustomAuthStateProvider` and call `AuthenticateUser` with the user's identifier.
 
 :::moniker range=">= aspnetcore-8.0"
 
@@ -436,7 +435,7 @@ In a component:
 
     private void SignIn()
     {
-        ((CustomAuthenticationStateProvider)AuthenticationStateProvider)
+        ((CustomAuthStateProvider)AuthenticationStateProvider)
             .AuthenticateUser(userIdentifier);
     }
 }
@@ -466,7 +465,7 @@ In a component:
 
     private void SignIn()
     {
-        ((CustomAuthenticationStateProvider)AuthenticationStateProvider)
+        ((CustomAuthStateProvider)AuthenticationStateProvider)
             .AuthenticateUser(userIdentifier);
     }
 }
@@ -520,18 +519,18 @@ services.AddScoped<AuthenticationService>();
 
 :::moniker-end
 
-The following `CustomAuthenticationStateProvider` subscribes to the `AuthenticationService.UserChanged` event. `GetAuthenticationStateAsync` returns the user's authentication state. Initially, the authentication state is based on the value of the `AuthenticationService.CurrentUser`. When there's a change in user, a new authentication state is created with the new user (`new AuthenticationState(newUser)`) for calls to `GetAuthenticationStateAsync`:
+The following `CustomAuthStateProvider` subscribes to the `AuthenticationService.UserChanged` event. `GetAuthenticationStateAsync` returns the user's authentication state. Initially, the authentication state is based on the value of the `AuthenticationService.CurrentUser`. When there's a change in user, a new authentication state is created with the new user (`new AuthenticationState(newUser)`) for calls to `GetAuthenticationStateAsync`:
 
 ```csharp
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 
-public class CustomAuthenticationStateProvider : AuthenticationStateProvider
+public class CustomAuthStateProvider : AuthenticationStateProvider
 {
     private AuthenticationState authenticationState;
 
-    public CustomAuthenticationStateProvider(AuthenticationService service)
+    public CustomAuthStateProvider(AuthenticationService service)
     {
         authenticationState = new AuthenticationState(service.CurrentUser);
 
@@ -747,7 +746,7 @@ For more information, see the guidance on <xref:Microsoft.AspNetCore.Components.
 
 To avoid showing unauthorized content, for example content in an [`AuthorizeView` component](xref:blazor/security/index#authorizeview-component), while prerendering with a [custom `AuthenticationStateProvider`](#implement-a-custom-authenticationstateprovider), adopt ***one*** of the following approaches:
 
-* Implement <xref:Microsoft.AspNetCore.Components.Authorization.IHostEnvironmentAuthenticationStateProvider> for the custom <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider> to support prerendering: For an example implementation of <xref:Microsoft.AspNetCore.Components.Authorization.IHostEnvironmentAuthenticationStateProvider>, see the Blazor framework's <xref:Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider> implementation in [`ServerAuthenticationStateProvider.cs` (reference source)](https://github.com/dotnet/aspnetcore/blob/main/src/Components/Server/src/Circuits/ServerAuthenticationStateProvider.cs).
+* Implement <xref:Microsoft.AspNetCore.Components.Authorization.IHostEnvironmentAuthenticationStateProvider> for the custom <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider> to support prerendering: For an example implementation of <xref:Microsoft.AspNetCore.Components.Authorization.IHostEnvironmentAuthenticationStateProvider>, see the Blazor framework's <xref:Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider> implementation in [`ServerAuthenticationStateProvider.cs` (reference source)](https://github.com/dotnet/aspnetcore/blob/main/src/Components/Endpoints/src/DependencyInjection/ServerAuthenticationStateProvider.cs).
 
   [!INCLUDE[](~/includes/aspnetcore-repo-ref-source-links.md)]
 
@@ -770,7 +769,7 @@ To avoid showing unauthorized content, for example content in an [`AuthorizeView
   <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: false)" />
   ```
 
-  You can also selectively disable prerendering with fine control of the render mode applied to the `Routes` component instance. For more information, see <xref:blazor/components/render-modes#fine-control-of-render-modes>.
+  You can also selectively control the render mode applied to the `Routes` component instance. For example, see <xref:blazor/components/render-modes#static-ssr-pages-in-a-globally-interactive-app>.
 
 :::moniker-end
 
@@ -798,7 +797,7 @@ For guidance on general state management outside of ASP.NET Core Identity, see <
 
 Two additional abstractions participate in managing authentication state:
 
-* <xref:Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider> ([reference source](https://github.com/dotnet/aspnetcore/blob/main/src/Components/Server/src/Circuits/ServerAuthenticationStateProvider.cs)): An <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider> used by the Blazor framework to obtain authentication state from the server.
+* <xref:Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider> ([reference source](https://github.com/dotnet/aspnetcore/blob/main/src/Components/Endpoints/src/DependencyInjection/ServerAuthenticationStateProvider.cs)): An <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider> used by the Blazor framework to obtain authentication state from the server.
 
 * <xref:Microsoft.AspNetCore.Components.Server.RevalidatingServerAuthenticationStateProvider> ([reference source](https://github.com/dotnet/aspnetcore/blob/main/src/Components/Server/src/Circuits/RevalidatingServerAuthenticationStateProvider.cs)): A base class for <xref:Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider> services used by the Blazor framework to receive an authentication state from the host environment and revalidate it at regular intervals.
 

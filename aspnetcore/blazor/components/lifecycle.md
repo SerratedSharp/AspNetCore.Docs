@@ -18,7 +18,7 @@ This article explains the ASP.NET Core Razor component lifecycle and how to use 
 
 The Razor component processes Razor component lifecycle events in a set of synchronous and asynchronous lifecycle methods. The lifecycle methods can be overridden to perform additional operations in components during component initialization and rendering.
 
-This article simplifies component lifecycle event processing in order to clarify complex framework logic. You may need to access the [`ComponentBase` reference source](https://github.com/dotnet/aspnetcore/blob/main/src/Components/Components/src/ComponentBase.cs) to integrate custom event processing with Blazor's lifecycle event processing. Code comments in the reference source include additional remarks on lifecycle event processing that don't appear in this article or in the [API documentation](/dotnet/api/). Blazor's lifecycle event processing has changed over time and is subject to change without notice each release.
+This article simplifies component lifecycle event processing in order to clarify complex framework logic and doesn't cover every change that was made over the years. You may need to access the [`ComponentBase` reference source](https://github.com/dotnet/aspnetcore/blob/main/src/Components/Components/src/ComponentBase.cs) to integrate custom event processing with Blazor's lifecycle event processing. Code comments in the reference source include additional remarks on lifecycle event processing that don't appear in this article or in the [API documentation](/dotnet/api/).
 
 [!INCLUDE[](~/includes/aspnetcore-repo-ref-source-links.md)]
 
@@ -28,7 +28,7 @@ Component lifecycle events:
 
 1. If the component is rendering for the first time on a request:
    * Create the component's instance.
-   * Perform property injection. Run [`SetParametersAsync`](#when-parameters-are-set-setparametersasync).
+   * Perform property injection.
    * Call [`OnInitialized{Async}`](#component-initialization-oninitializedasync). If an incomplete <xref:System.Threading.Tasks.Task> is returned, the <xref:System.Threading.Tasks.Task> is awaited and then the component is rerendered. The synchronous method is called prior to the asychronous method.
 1. Call [`OnParametersSet{Async}`](#after-parameters-are-set-onparameterssetasync). If an incomplete <xref:System.Threading.Tasks.Task> is returned, the <xref:System.Threading.Tasks.Task> is awaited and then the component is rerendered. The synchronous method is called prior to the asychronous method.
 1. Render for all synchronous work and complete <xref:System.Threading.Tasks.Task>s.
@@ -37,6 +37,9 @@ Component lifecycle events:
 > Asynchronous actions performed in lifecycle events might not have completed before a component is rendered. For more information, see the [Handle incomplete async actions at render](#handle-incomplete-async-actions-at-render) section later in this article.
 
 A parent component renders before its children components because rendering is what determines which children are present. If synchronous parent component initialization is used, the parent initialization is guaranteed to complete first. If asynchronous parent component initialization is used, the completion order of parent and child component initialization can't be determined because it depends on the initialization code running.
+
+<!-- UPDATE 9.0 Update the diagram to drop "Property injection"?
+                https://github.com/dotnet/AspNetCore.Docs/issues/32091 -->
 
 ![Component lifecycle events of a Razor component in Blazor](~/blazor/components/lifecycle/_static/lifecycle1.png)
 
@@ -50,9 +53,9 @@ DOM event processing:
 
 The `Render` lifecycle:
 
-1. Avoid further rendering operations on the component:
-   * After the first render.
-   * When [`ShouldRender`](xref:blazor/components/rendering#suppress-ui-refreshing-shouldrender) is `false`.
+1. Avoid further rendering operations on the component when both of the following conditions are met:
+   * It is not the first render.
+   * [`ShouldRender`](xref:blazor/components/rendering#suppress-ui-refreshing-shouldrender) returns `false`.
 1. Build the render tree diff (difference) and render the component.
 1. Await the DOM to update.
 1. Call [`OnAfterRender{Async}`](#after-component-render-onafterrenderasync). The synchronous method is called prior to the asychronous method.
@@ -69,9 +72,17 @@ The method's <xref:Microsoft.AspNetCore.Components.ParameterView> parameter cont
 
 The default implementation of <xref:Microsoft.AspNetCore.Components.ComponentBase.SetParametersAsync%2A> sets the value of each property with the [`[Parameter]`](xref:Microsoft.AspNetCore.Components.ParameterAttribute) or [`[CascadingParameter]` attribute](xref:Microsoft.AspNetCore.Components.CascadingParameterAttribute) that has a corresponding value in the <xref:Microsoft.AspNetCore.Components.ParameterView>. Parameters that don't have a corresponding value in <xref:Microsoft.AspNetCore.Components.ParameterView> are left unchanged.
 
-If [`base.SetParametersAsync`](xref:Microsoft.AspNetCore.Components.ComponentBase.SetParametersAsync%2A) isn't invoked, developer code can interpret the incoming parameters' values in any way required. For example, there's no requirement to assign the incoming parameters to the properties of the class.
+Generally, your code should call the base class method (`await base.SetParametersAsync(parameters);`) when overriding <xref:Microsoft.AspNetCore.Components.ComponentBase.SetParametersAsync%2A>. In advanced scenarios, developer code can interpret the incoming parameters' values in any way required by not invoking the base class method. For example, there's no requirement to assign the incoming parameters to the properties of the class. However, you must refer to the [`ComponentBase` reference source](https://github.com/dotnet/aspnetcore/blob/main/src/Components/Components/src/ComponentBase.cs) when structuring your code without calling the base class method because it calls other lifecycle methods and triggers rendering in a complex fashion.
 
-If event handlers are provided in developer code, unhook them on disposal. For more information, see the [Component disposal with `IDisposable` `IAsyncDisposable`](#component-disposal-with-idisposable-and-iasyncdisposable) section.
+[!INCLUDE[](~/includes/aspnetcore-repo-ref-source-links.md)]
+
+If you want to rely on the initialization and rendering logic of <xref:Microsoft.AspNetCore.Components.ComponentBase.SetParametersAsync%2A?displayProperty=nameWithType> but not process incoming parameters, you have the option of passing an empty <xref:Microsoft.AspNetCore.Components.ParameterView> to the base class method:
+
+```csharp
+await base.SetParametersAsync(ParameterView.Empty);
+```
+
+If event handlers are provided in developer code, unhook them on disposal. For more information, see the [Component disposal with `IDisposable` and `IAsyncDisposable`](#component-disposal-with-idisposable-and-iasyncdisposable) section.
 
 In the following example, <xref:Microsoft.AspNetCore.Components.ParameterView.TryGetValue%2A?displayProperty=nameWithType> assigns the `Param` parameter's value to `value` if parsing a route parameter for `Param` is successful. When `value` isn't `null`, the value is displayed by the component.
 
@@ -111,7 +122,9 @@ Although [route parameter matching is case insensitive](xref:blazor/fundamentals
 
 ## Component initialization (`OnInitialized{Async}`)
 
-<xref:Microsoft.AspNetCore.Components.ComponentBase.OnInitialized%2A> and <xref:Microsoft.AspNetCore.Components.ComponentBase.OnInitializedAsync%2A> are invoked when the component is initialized after having received its initial parameters in <xref:Microsoft.AspNetCore.Components.ComponentBase.SetParametersAsync%2A>. The synchronous method is called prior to the asychronous method.
+<xref:Microsoft.AspNetCore.Components.ComponentBase.OnInitialized%2A> and <xref:Microsoft.AspNetCore.Components.ComponentBase.OnInitializedAsync%2A> are used exclusively to initialize a component for the entire lifetime of the component instance. Parameter values and parameter value changes shouldn't affect the initialization performed in these methods. For example, loading static options into a dropdown list that doesn't change for the lifetime of the component and that isn't dependent on parameter values is performed in one of these lifecycle methods. If parameter values or changes in parameter values affect component state, use [`OnParametersSet{Async}`](#when-parameters-are-set-setparametersasync) instead.
+
+These methods are invoked when the component is initialized after having received its initial parameters in <xref:Microsoft.AspNetCore.Components.ComponentBase.SetParametersAsync%2A>. The synchronous method is called prior to the asynchronous method.
 
 If synchronous parent component initialization is used, the parent initialization is guaranteed to complete before child component initialization. If asynchronous parent component initialization is used, the completion order of parent and child component initialization can't be determined because it depends on the initialization code running.
 
@@ -194,7 +207,7 @@ If event handlers are provided in developer code, unhook them on disposal. For m
 
 ::: moniker range=">= aspnetcore-8.0"
 
-Use *streaming rendering* with Interactive Server components to improve the user experience for components that perform long-running asynchronous tasks in <xref:Microsoft.AspNetCore.Components.ComponentBase.OnInitializedAsync%2A> to fully render. For more information, see <xref:blazor/components/rendering#streaming-rendering>.
+Use *streaming rendering* with static server-side rendering (static SSR) or prerendering to improve the user experience for components that perform long-running asynchronous tasks in <xref:Microsoft.AspNetCore.Components.ComponentBase.OnInitializedAsync%2A> to fully render. For more information, see <xref:blazor/components/rendering#streaming-rendering>.
 
 :::moniker-end
 
@@ -212,6 +225,8 @@ Use *streaming rendering* with Interactive Server components to improve the user
   For more information on rendering conventions, see <xref:blazor/components/rendering#rendering-conventions-for-componentbase>.
 
 The synchronous method is called prior to the asychronous method.
+
+The methods can be invoked even if the parameter values haven't changed. This behavior underscores the need for developers to implement additional logic within the methods to check whether parameter values have indeed changed before re-initializing data or state dependent on those parameters.
 
 For the following example component, navigate to the component's page at a URL:
 
@@ -291,7 +306,7 @@ For an example of implementing `SetParametersAsync` manually to improve performa
 
 <xref:Microsoft.AspNetCore.Components.ComponentBase.OnAfterRender%2A> and <xref:Microsoft.AspNetCore.Components.ComponentBase.OnAfterRenderAsync%2A> are invoked after a component has rendered interactively and the UI has finished updating (for example, after elements are added to the browser DOM). Element and component references are populated at this point. Use this stage to perform additional initialization steps with the rendered content, such as JS interop calls that interact with the rendered DOM elements. The synchronous method is called prior to the asychronous method.
 
-These methods aren't invoked during prerendering or rendering on the server because those processes aren't attached to a live browser DOM and are already complete before the DOM is updated.
+These methods aren't invoked during prerendering or static server-side rendering (static SSR) on the server because those processes aren't attached to a live browser DOM and are already complete before the DOM is updated.
 
 For <xref:Microsoft.AspNetCore.Components.ComponentBase.OnAfterRenderAsync%2A>, the component doesn't automatically rerender after the completion of any returned `Task` to avoid an infinite render loop.
 
@@ -344,15 +359,18 @@ The `firstRender` parameter for <xref:Microsoft.AspNetCore.Components.ComponentB
 
 :::moniker-end
 
+The `AfterRender.razor` sample produces following output to console when the page is loaded and the button is selected:
+
+> :::no-loc text="OnAfterRender: firstRender = True":::  
+> :::no-loc text="HandleClick called":::  
+> :::no-loc text="OnAfterRender: firstRender = False":::
+
 Asynchronous work immediately after rendering must occur during the <xref:Microsoft.AspNetCore.Components.ComponentBase.OnAfterRenderAsync%2A> lifecycle event:
 
 ```csharp
 protected override async Task OnAfterRenderAsync(bool firstRender)
 {
-    if (firstRender)
-    {
-        await ...
-    }
+    ...
 }
 ```
 
@@ -380,7 +398,10 @@ If event handlers are provided in developer code, unhook them on disposal. For m
 
 ## Base class lifecycle methods
 
-When overriding Blazor's lifecycle methods, it isn't necessary to call base class lifecycle methods for <xref:Microsoft.AspNetCore.Components.ComponentBase>. However, a component should call an overridden base class lifecycle method if the base class method contains logic that must be executed. Library consumers usually call base class lifecycle methods when inheriting a base class because library base classes often have custom lifecycle logic to execute. If the app uses a base class from a library, consult the library's documentation for guidance.
+When overriding Blazor's lifecycle methods, it isn't necessary to call base class lifecycle methods for <xref:Microsoft.AspNetCore.Components.ComponentBase>. However, a component should call an overridden base class lifecycle method in the following situations:
+
+* When overriding <xref:Microsoft.AspNetCore.Components.ComponentBase.SetParametersAsync%2A?displayProperty=nameWithType>, `await base.SetParametersAsync(parameters);` is usually invoked because the base class method calls other lifecycle methods and triggers rendering in a complex fashion. For more information, see the [When parameters are set (`SetParametersAsync`)](#when-parameters-are-set-setparametersasync) section.
+* If the base class method contains logic that must be executed. Library consumers usually call base class lifecycle methods when inheriting a base class because library base classes often have custom lifecycle logic to execute. If the app uses a base class from a library, consult the library's documentation for guidance.
 
 In the following example, `base.OnInitialized();` is called to ensure that the base class's `OnInitialized` method is executed. Without the call, `BlazorRocksBase2.OnInitialized` doesn't execute.
 
@@ -562,7 +583,7 @@ Although the content in this section focuses on Blazor Server and stateful Signa
 
 ## Component disposal with `IDisposable` and `IAsyncDisposable`
 
-If a component implements <xref:System.IDisposable>, <xref:System.IAsyncDisposable>, or both, the framework calls for unmanaged resource disposal when the component is removed from the UI. Disposal can occur at any time, including during [component initialization](#component-initialization-oninitializedasync).
+If a component implements <xref:System.IDisposable> or <xref:System.IAsyncDisposable>, the framework calls for resource disposal when the component is removed from the UI. Don't rely on the exact timing of when these methods are executed. For example, <xref:System.IAsyncDisposable> can be triggered before or after an asychronous <xref:System.Threading.Tasks.Task> awaited in [`OnInitalizedAsync`](#component-initialization-oninitializedasync) is called or completes. Also, object disposal code shouldn't assume that objects created during initialization or other lifecycle methods exist.
 
 Components shouldn't need to implement <xref:System.IDisposable> and <xref:System.IAsyncDisposable> simultaneously. If both are implemented, the framework only executes the asynchronous overload.
 
@@ -593,7 +614,7 @@ For synchronous disposal tasks, use <xref:System.IDisposable.Dispose%2A?displayP
 The following component:
 
 * Implements <xref:System.IDisposable> with the [`@implements`](xref:mvc/views/razor#implements) Razor directive.
-* Disposes of `obj`, which is an unmanaged type that implements <xref:System.IDisposable>.
+* Disposes of `obj`, which is a type that implements <xref:System.IDisposable>.
 * A null check is performed because `obj` is created in a lifecycle method (not shown).
 
 ```razor
@@ -748,7 +769,7 @@ These are unusual scenarios. For objects that are implemented correctly and beha
 ### `StateHasChanged`
 
 > [!NOTE]
-> Calling <xref:Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged%2A> in `Dispose` isn't supported. <xref:Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged%2A> might be invoked as part of tearing down the renderer, so requesting UI updates at that point isn't supported.
+> Calling <xref:Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged%2A> in `Dispose` and `DisposeAsync` isn't supported. <xref:Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged%2A> might be invoked as part of tearing down the renderer, so requesting UI updates at that point isn't supported.
 
 ### Event handlers
 

@@ -4,7 +4,7 @@ author: guardrex
 description: Learn how to secure a hosted ASP.NET Core Blazor WebAssembly app with Identity Server.
 monikerRange: '>= aspnetcore-3.1 < aspnetcore-8.0'
 ms.author: riande
-ms.custom: mvc
+ms.custom: mvc, linux-related-content
 ms.date: 02/09/2024
 uid: blazor/security/webassembly/hosted-with-identity-server
 ---
@@ -51,7 +51,7 @@ To create a new Blazor WebAssembly project with an authentication mechanism:
 
 1. Select the **Create** button to create the app.
 
-# [Visual Studio Code / .NET Core CLI](#tab/visual-studio-code+netcore-cli)
+# [Visual Studio Code / .NET CLI](#tab/visual-studio-code+net-cli)
 
 To create a new Blazor WebAssembly project with an authentication mechanism in an empty folder, specify the `Individual` authentication mechanism with the `-au|--auth` option to store users within the app using ASP.NET Core's [Identity](xref:security/authentication/identity) system:
 

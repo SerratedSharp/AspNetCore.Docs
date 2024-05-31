@@ -30,6 +30,33 @@ For various `QuickGrid` demonstrations, see the [**QuickGrid for Blazor** sample
 
 To implement a `QuickGrid` component:
 
+:::moniker-end
+
+:::moniker range=">= aspnetcore-9.0"
+
+* Specify tags for the `QuickGrid` component in Razor markup (`<QuickGrid>...</QuickGrid>`).
+* Name a queryable source of data for the grid. Use ***either*** of the following data sources:
+  * <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Items%2A>: A nullable `IQueryable<TGridItem>`, where `TGridItem` is the type of data represented by each row in the grid.
+  * <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.ItemsProvider%2A>: A callback that supplies data for the grid.
+* <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Class%2A>: An optional CSS class name. If provided, the class name is included in the `class` attribute of the rendered table.
+* <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Theme%2A>: A theme name (default value: `default`). This affects which styling rules match the table.
+* <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Virtualize%2A>: If true, the grid is rendered with virtualization. This is normally used in conjunction with scrolling and causes the grid to fetch and render only the data around the current scroll viewport. This can greatly improve the performance when scrolling through large data sets. If you use <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Virtualize%2A>, you should supply a value for <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.ItemSize%2A> and must ensure that every row renders with a constant height. Generally, it's preferable not to use <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Virtualize%2A> if the amount of data rendered is small or if you're using pagination.
+* <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.ItemSize%2A>: Only applicable when using <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Virtualize%2A>. <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.ItemSize%2A> defines an expected height in pixels for each row, allowing the virtualization mechanism to fetch the correct number of items to match the display size and to ensure accurate scrolling.
+* <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.ItemKey%2A>: Optionally defines a value for `@key` on each rendered row. Typically, this is used to specify a unique identifier, such as a primary key value, for each data item. This allows the grid to preserve the association between row elements and data items based on their unique identifiers, even when the `TGridItem` instances are replaced by new copies (for example, after a new query against the underlying data store). If not set, the `@key` is the `TGridItem` instance.
+* `OverscanCount`: Defines how many additional items to render before and after the visible region to reduce rendering frequency during scrolling. While higher values can improve scroll smoothness by rendering more items off-screen, a higher value can also result in an increase in initial load times. Finding a balance based on your data set size and user experience requirements is recommended. The default value is 3. Only available when using <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Virtualize%2A>. 
+* <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Pagination%2A>: Optionally links this `TGridItem` instance with a <xref:Microsoft.AspNetCore.Components.QuickGrid.PaginationState> model, causing the grid to fetch and render only the current page of data. This is normally used in conjunction with a <xref:Microsoft.AspNetCore.Components.QuickGrid.Paginator> component or some other UI logic that displays and updates the supplied <xref:Microsoft.AspNetCore.Components.QuickGrid.PaginationState> instance.
+* In the `QuickGrid` child content (<xref:Microsoft.AspNetCore.Components.RenderFragment>), specify <xref:Microsoft.AspNetCore.Components.QuickGrid.PropertyColumn`2>s, which represent `TGridItem` columns whose cells display values:
+  * <xref:Microsoft.AspNetCore.Components.QuickGrid.PropertyColumn%602.Property%2A>: Defines the value to be displayed in this column's cells.
+  * <xref:Microsoft.AspNetCore.Components.QuickGrid.PropertyColumn%602.Format%2A>: Optionally specifies a format string for the value. Using <xref:Microsoft.AspNetCore.Components.QuickGrid.PropertyColumn%602.Format%2A> requires the `TProp` type to implement <xref:System.IFormattable>.
+  * <xref:Microsoft.AspNetCore.Components.QuickGrid.ColumnBase%601.Sortable%2A>: Indicates whether the data should be sortable by this column. The default value may vary according to the column type. For example, a <xref:Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn%601> is sortable by default if any <xref:Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn%601.SortBy%2A> parameter is specified.
+  * <xref:Microsoft.AspNetCore.Components.QuickGrid.ColumnBase%601.InitialSortDirection%2A>: Indicates the sort direction if <xref:Microsoft.AspNetCore.Components.QuickGrid.ColumnBase%601.IsDefaultSortColumn%2A> is `true`.
+  * <xref:Microsoft.AspNetCore.Components.QuickGrid.ColumnBase%601.IsDefaultSortColumn%2A>: Indicates whether this column should be sorted by default.
+  * <xref:Microsoft.AspNetCore.Components.QuickGrid.ColumnBase%601.PlaceholderTemplate%2A>: If specified, virtualized grids use this template to render cells whose data hasn't been loaded.
+
+:::moniker-end
+
+:::moniker range=">= aspnetcore-8.0 < aspnetcore-9.0"
+
 * Specify tags for the `QuickGrid` component in Razor markup (`<QuickGrid>...</QuickGrid>`).
 * Name a queryable source of data for the grid. Use ***either*** of the following data sources:
   * <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Items%2A>: A nullable `IQueryable<TGridItem>`, where `TGridItem` is the type of data represented by each row in the grid.
@@ -48,6 +75,10 @@ To implement a `QuickGrid` component:
   * <xref:Microsoft.AspNetCore.Components.QuickGrid.ColumnBase%601.IsDefaultSortColumn%2A>: Indicates whether this column should be sorted by default.
   * <xref:Microsoft.AspNetCore.Components.QuickGrid.ColumnBase%601.PlaceholderTemplate%2A>: If specified, virtualized grids use this template to render cells whose data hasn't been loaded.
 
+:::moniker-end
+
+:::moniker range=">= aspnetcore-8.0"
+
 For example, add the following component to render a grid.
 
 The component assumes that the Interactive Server render mode (`InteractiveServer`) is inherited from a parent component or applied globally to the app, which enables interactive features. For the following example, the only interactive feature is sortable columns.
@@ -55,28 +86,6 @@ The component assumes that the Interactive Server render mode (`InteractiveServe
 `PromotionGrid.razor`:
 
 :::code language="razor" source="~/../blazor-samples/8.0/BlazorSample_BlazorWebApp/Components/Pages/PromotionGrid.razor":::
-
-For an example that uses an <xref:System.Linq.IQueryable> with Entity Framework Core as the queryable data source, see the [`SampleQuickGridComponent` component in the ASP.NET Core Basic Test App (`dotnet/aspnetcore` GitHub repository)](https://github.com/dotnet/aspnetcore/blob/main/src/Components/test/testassets/BasicTestApp/QuickGridTest/SampleQuickGridComponent.razor).
-
-[!INCLUDE[](~/includes/aspnetcore-repo-ref-source-links.md)]
-
-To use Entity Framework (EF) Core as the data source:
-
-* Add a package reference for the [`Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter`](https://www.nuget.org/packages/Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter) package.
-
-  [!INCLUDE[](~/includes/package-reference.md)]
-
-* Call `AddQuickGridEntityFrameworkAdapter` on the service collection in the `Program` file to register an EF-aware <xref:Microsoft.AspNetCore.Components.QuickGrid.IAsyncQueryExecutor> implementation:
-
-  ```csharp
-  builder.Services.AddQuickGridEntityFrameworkAdapter();
-  ```
-
-QuickGrid supports passing custom attributes to the rendered table element:
-
-```razor
-<QuickGrid Items="..." custom-attribute="somevalue" class="custom-class">
-```
 
 :::moniker-end
 
@@ -127,6 +136,123 @@ Add the following component to render a grid.
 Access the component in a browser at the relative path `/promotion-grid`.
 
 There aren't current plans to extend `QuickGrid` with features that full-blown commercial grids tend to offer, for example, hierarchical rows, drag-to-reorder columns, or Excel-like range selections. If you require advanced features that you don't wish to develop on your own, continue using third-party grids.
+
+## Custom attributes and styles
+
+QuickGrid also supports passing custom attributes and style classes to the rendered table element:
+
+```razor
+<QuickGrid Items="..." custom-attribute="value" class="custom-class">
+```
+
+:::moniker range=">= aspnetcore-8.0"
+
+## Entity Framework Core (EF Core) data source
+
+EF Core's <xref:Microsoft.EntityFrameworkCore.DbContext> provides a <xref:Microsoft.EntityFrameworkCore.DbSet%601> property for each table in the database. Supply the property to the <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Items%2A> parameter.
+
+The following example uses the `People` <xref:Microsoft.EntityFrameworkCore.DbSet%601> (table) as the data source:
+
+```razor
+@inject ApplicationDbContext AppDbContext
+
+<QuickGrid Items="@AppDbContext.People">
+    ...
+</QuickGrid>
+```
+
+You may also use any EF-supported LINQ operator to filter the data before passing it to the <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.Items%2A> parameter.
+
+The following example filters documents by a category ID:
+
+```razor
+<QuickGrid Items="@AppDbContext.Documents.Where(d => d.CategoryId == categoryId)">
+    ...
+</QuickGrid>
+```
+
+QuickGrid recognizes EF-supplied <xref:System.Linq.IQueryable> instances and knows how to resolve queries asynchronously for efficiency.
+
+Start by adding a package reference for the [`Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter` NuGet package](https://www.nuget.org/packages/Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter).
+
+[!INCLUDE[](~/includes/package-reference.md)]
+
+<!-- UPDATE 8.0 MIA API for AddQuickGridEntityFrameworkAdapter -->
+
+Call `AddQuickGridEntityFrameworkAdapter` on the service collection in the `Program` file to register an EF-aware <xref:Microsoft.AspNetCore.Components.QuickGrid.IAsyncQueryExecutor> implementation:
+
+```csharp
+builder.Services.AddQuickGridEntityFrameworkAdapter();
+```
+
+:::moniker-end
+
+## Remote data
+
+In Blazor WebAssembly apps, fetching data from a JSON-based web API on a server is a common requirement. To fetch only the data that's required for the current page/viewport of data and apply sorting or filtering rules on the server, use the <xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.ItemsProvider%2A> parameter.
+
+<xref:Microsoft.AspNetCore.Components.QuickGrid.QuickGrid%601.ItemsProvider%2A> can also be used in a server-side Blazor app if the app is required to query an external endpoint or in other cases where the requirements aren't covered by an <xref:System.Linq.IQueryable>.
+
+Supply a callback matching the <xref:Microsoft.AspNetCore.Components.QuickGrid.GridItemsProvider%601> delegate type, where `TGridItem` is the type of data displayed in the grid. The callback is given a parameter of type <xref:Microsoft.AspNetCore.Components.QuickGrid.GridItemsProviderRequest%601>, which specifies the start index, maximum row count, and sort order of data to return. In addition to returning the matching items, a total item count (`totalItemCount`) is also required for paging and virtualization to function correctly.
+
+The following example obtains data from the public [OpenFDA Food Enforcement database](https://open.fda.gov/apis/food/enforcement/).
+
+The <xref:Microsoft.AspNetCore.Components.QuickGrid.GridItemsProvider%601> converts the <xref:Microsoft.AspNetCore.Components.QuickGrid.GridItemsProviderRequest%601> into a query against the OpenFDA database. Query parameters are translated into the particular URL format supported by the external JSON API. It's only possible to perform sorting and filtering via sorting and filtering that's supported by the external API. The OpenFDA endpoint doesn't support sorting, so none of the columns are marked as sortable. However, it does support skipping records (`skip` parameter) and limiting the return of records (`limit` parameter), so the component can enable virtualization and scroll quickly through tens of thousands of records.
+
+`FoodRecalls.razor`:
+
+```razor
+@page "/food-recalls"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<PageTitle>Food Recalls</PageTitle>
+
+<h1>OpenFDA Food Recalls</h1>
+
+<div class="grid" tabindex="-1">
+    <QuickGrid ItemsProvider="@foodRecallProvider" Virtualize="true">
+        <PropertyColumn Title="ID" Property="@(c => c.Event_Id)" />
+        <PropertyColumn Property="@(c => c.State)" />
+        <PropertyColumn Property="@(c => c.City)" />
+        <PropertyColumn Title="Company" Property="@(c => c.Recalling_Firm)" />
+        <PropertyColumn Property="@(c => c.Status)" />
+    </QuickGrid>
+</div>
+
+<p>Total: <strong>@numResults results found</strong></p>
+
+@code {
+    GridItemsProvider<FoodRecall>? foodRecallProvider;
+    int numResults;
+
+    protected override async Task OnInitializedAsync()
+    {
+        foodRecallProvider = async req =>
+        {
+            var url = NavManager.GetUriWithQueryParameters(
+                "https://api.fda.gov/food/enforcement.json", 
+                new Dictionary<string, object?>
+            {
+                { "skip", req.StartIndex },
+                { "limit", req.Count },
+            });
+
+            var response = await Http.GetFromJsonAsync<FoodRecallQueryResult>(
+                url, req.CancellationToken);
+
+            return GridItemsProviderResult.From(
+                items: response!.Results,
+                totalItemCount: response!.Meta.Results.Total);
+        };
+
+        numResults = (await Http.GetFromJsonAsync<FoodRecallQueryResult>(
+            "https://api.fda.gov/food/enforcement.json"))!.Meta.Results.Total;
+    }
+}
+```
+
+For more information on calling web APIs, see <xref:blazor/call-web-api>.
 
 ## `QuickGrid` scaffolder
 

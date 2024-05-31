@@ -14,20 +14,19 @@ uid: blazor/security/index
 
 This article describes ASP.NET Core's support for the configuration and management of security in Blazor apps.
 
-Security scenarios differ between server-side and client-side Blazor apps. Because a server-side app runs on the server, authorization checks are able to determine:
-
-* The UI options presented to a user (for example, which menu entries are available to a user).
-* Access rules for areas of the app and components.
-
-For a client-side app, authorization is *only* used to determine which UI options to show. Since client-side checks can be modified or bypassed by a user, a client-side app can't enforce authorization access rules.
+Security scenarios differ between authorization code running server-side and client-side in Blazor apps. For authorization code that runs on the server, authorization checks are able to enforce access rules for areas of the app and components. Because client-side code execution can be tampered with, authorization code executing on the client can't be trusted to absolutely enforce access rules or control the display of client-side content.
 
 :::moniker range=">= aspnetcore-8.0"
+
+If authorization rule enforcement must be guaranteed, don't implement authorization checks in client-side code. Build a Blazor Web App that only relies on server-side rendering (SSR) for authorization checks and rule enforcement.
 
 [Razor Pages authorization conventions](xref:security/authorization/razor-pages-authorization) don't apply to routable Razor components. If a non-routable Razor component is [embedded in a page of a Razor Pages app](xref:blazor/components/integration), the page's authorization conventions indirectly affect the Razor component along with the rest of the page's content.
 
 :::moniker-end
 
 :::moniker range="< aspnetcore-8.0"
+
+If authorization rule enforcement and the security of data and code must be guaranteed, don't develop a client-side app. Build a Blazor Server app.
 
 [Razor Pages authorization conventions](xref:security/authorization/razor-pages-authorization) don't apply to routable Razor components. If a non-routable Razor component is [embedded in a page of a Razor Pages app](xref:blazor/components/prerendering-and-integration), the page's authorization conventions indirectly affect the Razor component along with the rest of the page's content.
 
@@ -48,7 +47,10 @@ ASP.NET Core abstractions, such as <xref:Microsoft.AspNetCore.Identity.SignInMan
 
 ## Antiforgery support
 
-The Blazor template adds Antiforgery Middleware and requires endpoint [antiforgery protection](xref:security/anti-request-forgery) by default to mitigate the threats of Cross-Site Request Forgery (CSRF/XSRF).
+The Blazor template:
+
+* Adds antiforgery services automatically when <xref:Microsoft.Extensions.DependencyInjection.RazorComponentsServiceCollectionExtensions.AddRazorComponents%2A> is called in the `Program` file.
+* Adds Antiforgery Middleware by calling <xref:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery%2A> in its request processing pipeline in the `Program` file and requires endpoint [antiforgery protection](xref:security/anti-request-forgery) by default to mitigate the threats of Cross-Site Request Forgery (CSRF/XSRF). <xref:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery%2A> is called after the call to <xref:Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseRouting%2A>. If there are calls to <xref:Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseRouting%2A> and <xref:Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseEndpoints%2A>, the call to <xref:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery%2A> must go between them. A call to <xref:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery%2A> must be placed after calls to <xref:Microsoft.AspNetCore.Builder.AuthAppBuilderExtensions.UseAuthentication%2A> and <xref:Microsoft.AspNetCore.Builder.AuthorizationAppBuilderExtensions.UseAuthorization%2A>.
 
 The <xref:Microsoft.AspNetCore.Components.Forms.AntiforgeryToken> component renders an antiforgery token as a hidden field, and this component is automatically added to form (<xref:Microsoft.AspNetCore.Components.Forms.EditForm>) instances. For more information, see <xref:blazor/forms/index#antiforgery-support>.
 
@@ -57,7 +59,12 @@ The <xref:Microsoft.AspNetCore.Components.Forms.AntiforgeryStateProvider> servic
 Blazor stores request tokens in component state, which guarantees that antiforgery tokens are available to interactive components, even when they don't have access to the request.
 
 > [!NOTE]
-> [Antiforgery mitigation](xref:security/anti-request-forgery) is only required when submitting form data to the server encoded as `application/x-www-form-urlencoded`, `multipart/form-data`, or `text/plain` since these are the [only valid form enctypes](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#attr-fs-enctype). For more information, see <xref:blazor/forms/index#antiforgery-support>.
+> [Antiforgery mitigation](xref:security/anti-request-forgery) is only required when submitting form data to the server encoded as `application/x-www-form-urlencoded`, `multipart/form-data`, or `text/plain` since these are the [only valid form enctypes](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#attr-fs-enctype).
+
+For more information, see the following resources:
+
+* <xref:security/anti-request-forgery>: This article is the primary ASP.NET Core article on the subject, which applies to server-side Blazor Server, the server project of Blazor Web Apps, and Blazor integration with MVC/Razor Pages.
+* <xref:blazor/forms/index#antiforgery-support>: The *Antiforgery support* section of the article pertains to Blazor forms antiforgery support.
 
 :::moniker-end
 
@@ -355,12 +362,26 @@ When you create a Blazor app from one of the Blazor project templates with authe
 
 :::moniker-end
 
-In a client-side Blazor app, add services for options and authorization to the `Program` file:
+:::moniker range=">= aspnetcore-5.0"
+
+In a client-side Blazor app, add authorization services to the `Program` file:
+
+```csharp
+builder.Services.AddAuthorizationCore();
+```
+
+:::moniker-end
+
+:::moniker range="< aspnetcore-5.0"
+
+In a client-side Blazor app, add options and authorization services to the `Program` file:
 
 ```csharp
 builder.Services.AddOptions();
 builder.Services.AddAuthorizationCore();
 ```
+
+:::moniker-end
 
 In a server-side Blazor app, services for options and authorization are already present, so no further steps are required.
 
@@ -408,6 +429,12 @@ You can also supply different content for display if the user isn't authorized w
 ```
 
 A default event handler for an authorized element, such as the `SecureMethod` method for the `<button>` element in the preceding example, can only be invoked by an authorized user.
+
+:::moniker range=">= aspnetcore-8.0"
+
+Razor components of Blazor Web Apps never display `<NotAuthorized>` content when authorization fails server-side during static server-side rendering (static SSR). The server-side ASP.NET Core pipeline processes authorization on the server. Use server-side techniques to handle unauthorized requests. For more information, see <xref:blazor/components/render-modes#static-server-side-rendering-static-ssr>.
+
+:::moniker-end
 
 > [!WARNING]
 > Client-side markup and methods associated with an <xref:Microsoft.AspNetCore.Components.Authorization.AuthorizeView> are only protected from view and execution in the ***rendered UI*** in client-side Blazor apps. In order to protect authorized content and secure methods in client-side Blazor, the content is usually supplied by a secure, authorized web API call to a server API and never stored in the app. For more information, see <xref:blazor/call-web-api> and <xref:blazor/security/webassembly/additional-scenarios>.
@@ -655,6 +682,13 @@ The <xref:Microsoft.AspNetCore.Components.Routing.Router> component, in conjunct
 
 * The user fails an [`[Authorize]`](xref:Microsoft.AspNetCore.Authorization.AuthorizeAttribute) condition applied to the component. The markup of the [`<NotAuthorized>`](xref:Microsoft.AspNetCore.Components.Authorization.AuthorizeRouteView.NotAuthorized?displayProperty=nameWithType) element is displayed. The [`[Authorize]`](xref:Microsoft.AspNetCore.Authorization.AuthorizeAttribute) attribute is covered in the [`[Authorize]` attribute](#authorize-attribute) section.
 * Asynchronous authorization is in progress, which usually means that the process of authenticating the user is in progress. The markup of the [`<Authorizing>`](xref:Microsoft.AspNetCore.Components.Authorization.AuthorizeRouteView.Authorizing?displayProperty=nameWithType) element is displayed.
+
+:::moniker range=">= aspnetcore-8.0"
+
+> [!IMPORTANT]
+> Blazor router features that display `<NotAuthorized>` and `<NotFound>` content aren't operational during static server-side rendering (static SSR) because request processing is entirely handled by ASP.NET Core middleware pipeline request processing and Razor components aren't rendered at all for unauthorized or bad requests. Use server-side techniques to handle unauthorized and bad requests during static SSR. For more information, see <xref:blazor/components/render-modes#static-server-side-rendering-static-ssr>.
+
+:::moniker-end
 
 :::moniker range=">= aspnetcore-8.0"
 

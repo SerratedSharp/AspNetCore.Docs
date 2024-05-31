@@ -402,6 +402,8 @@ items:
             uid: blazor/supported-platforms
           - name: Tooling
             uid: blazor/tooling
+          - name: WebAssembly tooling and AOT
+            uid: blazor/tooling/webassembly
           - name: Hosting models
             uid: blazor/hosting-models
           - name: Tutorials
@@ -426,6 +428,8 @@ items:
                     uid: blazor/hybrid/tutorials/index
                   - name: .NET MAUI
                     uid: blazor/hybrid/tutorials/maui
+                  - name: .NET MAUI with Blazor Web App
+                    uid: blazor/hybrid/tutorials/maui-blazor-web-app
                   - name: Windows Forms
                     uid: blazor/hybrid/tutorials/windows-forms
                   - name: WPF
@@ -556,6 +560,8 @@ items:
             items:
               - name: Overview
                 uid: blazor/js-interop/index
+              - name: JavaScript location
+                uid: blazor/js-interop/javascript-location
               - name: Call JS from .NET
                 uid: blazor/js-interop/call-javascript-from-dotnet
               - name: Call .NET from JS
@@ -580,10 +586,10 @@ items:
                     uid: blazor/security/server/static-server-side-rendering
                   - name: Interactive server-side rendering threats
                     uid: blazor/security/server/interactive-server-side-rendering
-                  - name: Blazor Web App with OIDC
-                    uid: blazor/security/blazor-web-app-oidc
                   - name: Account confirmation and password recovery
                     uid: blazor/security/server/account-confirmation-and-password-recovery
+                  - name: QR code generation
+                    uid: blazor/security/server/qrcodes-for-authenticator-apps
                   - name: Additional scenarios
                     uid: blazor/security/server/additional-scenarios
               - name: Blazor WebAssembly
@@ -612,6 +618,8 @@ items:
                     uid: blazor/security/webassembly/meid-groups-roles
                   - name: Graph API
                     uid: blazor/security/webassembly/graph-api
+              - name: Blazor Web App with OIDC
+                uid: blazor/security/blazor-web-app-oidc
               - name: Content Security Policy
                 uid: blazor/security/content-security-policy
           - name: State management
@@ -632,10 +640,16 @@ items:
             items:
               - name: Overview
                 uid: blazor/host-and-deploy/index
-              - name: Blazor Server
+              - name: Server
                 uid: blazor/host-and-deploy/server
               - name: Blazor WebAssembly
                 uid: blazor/host-and-deploy/webassembly
+              - name: WebAssembly caching
+                items:
+                  - name: Overview
+                    uid: blazor/host-and-deploy/webassembly-caching/index
+                  - name: HTTP caching issues
+                    uid: blazor/host-and-deploy/webassembly-caching/http-caching-issues
               - name: Configure the Linker
                 uid: blazor/host-and-deploy/configure-linker
               - name: Configure the Trimmer
@@ -646,8 +660,6 @@ items:
                 uid: blazor/host-and-deploy/multiple-hosted-webassembly
           - name: Blazor with EF Core
             uid: blazor/blazor-ef-core
-          - name: HTTP caching issues
-            uid: blazor/http-caching-issues
           - name: Advanced scenarios
             uid: blazor/advanced-scenarios
       - name: Client-side development
@@ -828,7 +840,13 @@ items:
         - name: Create responses
           uid: fundamentals/minimal-apis/responses
         - name: OpenAPI
-          uid: fundamentals/minimal-apis/openapi
+          items:
+            - name: Overview
+              uid: fundamentals/minimal-apis/openapi
+            - name: Get started with Microsoft.AspNetCore.OpenApi
+              uid: fundamentals/minimal-apis/aspnetcore-openapi
+            - name: OpenAPI tools
+              uid: web-api/Microsoft.dotnet-openapi
         - name: Filters
           uid: fundamentals/minimal-apis/min-api-filters
         - name: Unit and integration tests
@@ -1523,8 +1541,6 @@ items:
             uid: security/authentication/jwt
           - name: Map, customize, and transform claims
             uid: security/authentication/claims
-          - name: Authentication samples
-            uid: security/authentication/samples
           - name: Community OSS authentication options
             uid: security/authentication/community
           - name: Identity management solutions
@@ -1690,6 +1706,9 @@ items:
           - name: Distributed caching
             displayName: cache
             uid: performance/caching/distributed
+          - name: Hybrid cache
+            displayName: caching
+            uid: performance/caching/hybrid
           - name: Output caching
             displayName: cache
             uid: performance/caching/output
@@ -1859,6 +1878,8 @@ items:
               uid: migration/inc/wrapped
             - name: Session state migration
               uid: migration/inc/session
+            - name: Module migration
+              uid: migration/inc/http-modules
             - name: Remote app session state
               uid: migration/inc/remote-session
             - name: Remote Authentication

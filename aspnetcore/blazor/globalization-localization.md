@@ -435,7 +435,7 @@ const string defaultCulture = "en-US";
 
 var js = host.Services.GetRequiredService<IJSRuntime>();
 var result = await js.InvokeAsync<string>("blazorCulture.get");
-var culture = CultureInfo.GetCulture(result ?? defaultCulture);
+var culture = CultureInfo.GetCultureInfo(result ?? defaultCulture);
 
 if (result == null)
 {
@@ -458,15 +458,17 @@ The following `CultureSelector` component shows how to perform the following act
 
 `CultureSelector.razor`:
 
+:::moniker range=">= aspnetcore-7.0"
+
 ```razor
-@using  System.Globalization
+@using System.Globalization
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 
 <p>
     <label>
         Select your locale:
-        <select @bind="Culture">
+        <select @bind="selectedCulture" @bind:after="ApplySelectedCultureAsync">
             @foreach (var culture in supportedCultures)
             {
                 <option value="@culture">@culture.DisplayName</option>
@@ -483,25 +485,79 @@ The following `CultureSelector` component shows how to perform the following act
         new CultureInfo("es-CR"),
     };
 
-    private CultureInfo Culture
-    {
-        get => CultureInfo.CurrentCulture;
-        set
-        {
-            if (CultureInfo.CurrentCulture != value)
-            {
-                var js = (IJSInProcessRuntime)JS;
-                js.InvokeVoid("blazorCulture.set", value.Name);
+    private CultureInfo? selectedCulture;
 
-                Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
-            }
+    protected override void OnInitialized()
+    {
+        selectedCulture = CultureInfo.CurrentCulture;
+    }
+
+    private async Task ApplySelectedCultureAsync()
+    {
+        if (CultureInfo.CurrentCulture != selectedCulture)
+        {
+            await JS.InvokeVoidAsync("blazorCulture.set", selectedCulture!.Name);
+
+            Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
         }
     }
 }
 ```
 
+:::moniker-end
+
+:::moniker range="< aspnetcore-7.0"
+
+```razor
+@using System.Globalization
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<p>
+    <label>
+        Select your locale:
+        <select value="@selectedCulture" @onchange="HandleSelectedCultureChanged">
+            @foreach (var culture in supportedCultures)
+            {
+                <option value="@culture">@culture.DisplayName</option>
+            }
+        </select>
+    </label>
+</p>
+
+@code
+{
+    private CultureInfo[] supportedCultures = new[]
+    {
+        new CultureInfo("en-US"),
+        new CultureInfo("es-CR"),
+    };
+
+    private CultureInfo? selectedCulture;
+
+    protected override void OnInitialized()
+    {
+        selectedCulture = CultureInfo.CurrentCulture;
+    }
+
+    private async Task HandleSelectedCultureChanged(ChangeEventArgs args)
+    {
+        selectedCulture = CultureInfo.GetCultureInfo((string)args.Value!);
+
+        if (CultureInfo.CurrentCulture != selectedCulture)
+        {
+            await JS.InvokeVoidAsync("blazorCulture.set", selectedCulture!.Name);
+
+            Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+        }
+    }
+}
+```
+
+:::moniker-end
+
 > [!NOTE]
-> For more information on <xref:Microsoft.JSInterop.IJSInProcessRuntime>, see <xref:blazor/js-interop/call-javascript-from-dotnet#synchronous-js-interop-in-client-side-components>.
+> For more information on <xref:Microsoft.JSInterop.IJSInProcessRuntime>, see <xref:blazor/js-interop/call-javascript-from-dotnet#invoke-javascript-functions-without-reading-a-returned-value-invokevoidasync>.
 
 Inside the closing tag of the `</main>` element in the `MainLayout` component (`MainLayout.razor`), add the `CultureSelector` component:
 
@@ -678,14 +734,17 @@ The following `CultureSelector` component shows how to call the `Set` method of 
 
 `CultureSelector.razor`:
 
+:::moniker range=">= aspnetcore-7.0"
+
 ```razor
 @using System.Globalization
+@inject IJSRuntime JS
 @inject NavigationManager Navigation
 
 <p>
     <label>
         Select your locale:
-        <select @bind="Culture">
+        <select @bind="selectedCulture" @bind:after="ApplySelectedCultureAsync">
             @foreach (var culture in supportedCultures)
             {
                 <option value="@culture">@culture.DisplayName</option>
@@ -702,31 +761,86 @@ The following `CultureSelector` component shows how to call the `Set` method of 
         new CultureInfo("es-CR"),
     };
 
+    private CultureInfo? selectedCulture;
+
     protected override void OnInitialized()
     {
-        Culture = CultureInfo.CurrentCulture;
+        selectedCulture = CultureInfo.CurrentCulture;
     }
 
-    private CultureInfo Culture
+    private async Task ApplySelectedCultureAsync()
     {
-        get => CultureInfo.CurrentCulture;
-        set
+        if (CultureInfo.CurrentCulture != selectedCulture)
         {
-            if (CultureInfo.CurrentCulture != value)
-            {
-                var uri = new Uri(Navigation.Uri)
-                    .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
-                var cultureEscaped = Uri.EscapeDataString(value.Name);
-                var uriEscaped = Uri.EscapeDataString(uri);
-
-                Navigation.NavigateTo(
-                    $"Culture/Set?culture={cultureEscaped}&redirectUri={uriEscaped}",
-                    forceLoad: true);
-            }
+            var uri = new Uri(Navigation.Uri)
+                .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
+            var cultureEscaped = Uri.EscapeDataString(selectedCulture.Name);
+            var uriEscaped = Uri.EscapeDataString(uri);
+    
+            Navigation.NavigateTo(
+                $"Culture/Set?culture={cultureEscaped}&redirectUri={uriEscaped}",
+                forceLoad: true);
         }
     }
 }
 ```
+
+:::moniker-end
+
+:::moniker range="< aspnetcore-7.0"
+
+```razor
+@using System.Globalization
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<p>
+    <label>
+        Select your locale:
+        <select value="@selectedCulture" @onchange="HandleSelectedCultureChanged">
+            @foreach (var culture in supportedCultures)
+            {
+                <option value="@culture">@culture.DisplayName</option>
+            }
+        </select>
+    </label>
+</p>
+
+@code
+{
+    private CultureInfo[] supportedCultures = new[]
+    {
+        new CultureInfo("en-US"),
+        new CultureInfo("es-CR"),
+    };
+
+    private CultureInfo? selectedCulture;
+
+    protected override void OnInitialized()
+    {
+        selectedCulture = CultureInfo.CurrentCulture;
+    }
+
+    private async Task HandleSelectedCultureChanged(ChangeEventArgs args)
+    {
+        selectedCulture = CultureInfo.GetCultureInfo((string)args.Value!);
+
+        if (CultureInfo.CurrentCulture != selectedCulture)
+        {
+            var uri = new Uri(Navigation.Uri)
+                .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
+            var cultureEscaped = Uri.EscapeDataString(selectedCulture.Name);
+            var uriEscaped = Uri.EscapeDataString(uri);
+    
+            Navigation.NavigateTo(
+                $"Culture/Set?culture={cultureEscaped}&redirectUri={uriEscaped}",
+                forceLoad: true);
+        }
+    }
+}
+```
+
+:::moniker-end
 
 :::moniker range=">= aspnetcore-8.0"
 
@@ -818,7 +932,7 @@ const string defaultCulture = "en-US";
 
 var js = host.Services.GetRequiredService<IJSRuntime>();
 var result = await js.InvokeAsync<string>("blazorCulture.get");
-var culture = CultureInfo.GetCulture(result ?? defaultCulture);
+var culture = CultureInfo.GetCultureInfo(result ?? defaultCulture);
 
 if (result == null)
 {
@@ -845,14 +959,13 @@ The component adopts the following approaches to work for either SSR or CSR comp
 
 ```razor
 @using System.Globalization
-@using System.Runtime.InteropServices
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 
 <p>
     <label>
         Select your locale:
-        <select @bind="Culture">
+        <select @bind="@selectedCulture" @bind:after="ApplySelectedCultureAsync">
             @foreach (var culture in supportedCultures)
             {
                 <option value="@culture">@cultureDict[culture.Name]</option>
@@ -876,31 +989,34 @@ The component adopts the following approaches to work for either SSR or CSR comp
         new CultureInfo("es-CR"),
     };
 
-    private CultureInfo Culture
+    private CultureInfo? selectedCulture;
+
+    protected override void OnInitialized()
     {
-        get => CultureInfo.CurrentCulture;
-        set
+        selectedCulture = CultureInfo.CurrentCulture;
+    }
+
+    private async Task ApplySelectedCultureAsync()
+    {
+        if (CultureInfo.CurrentCulture != selectedCulture)
         {
-            if (CultureInfo.CurrentCulture != value)
-            {
-                JS.InvokeVoidAsync("blazorCulture.set", value.Name);
+            await JS.InvokeVoidAsync("blazorCulture.set", selectedCulture!.Name);
 
-                var uri = new Uri(Navigation.Uri)
-                    .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
-                var cultureEscaped = Uri.EscapeDataString(value.Name);
-                var uriEscaped = Uri.EscapeDataString(uri);
+            var uri = new Uri(Navigation.Uri)
+                .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
+            var cultureEscaped = Uri.EscapeDataString(selectedCulture.Name);
+            var uriEscaped = Uri.EscapeDataString(uri);
 
-                Navigation.NavigateTo(
-                    $"Culture/Set?culture={cultureEscaped}&redirectUri={uriEscaped}",
-                    forceLoad: true);
-            }
+            Navigation.NavigateTo(
+                $"Culture/Set?culture={cultureEscaped}&redirectUri={uriEscaped}",
+                forceLoad: true);
         }
     }
 }
 ```
 
 > [!NOTE]
-> For more information on <xref:Microsoft.JSInterop.IJSInProcessRuntime>, see <xref:blazor/js-interop/call-javascript-from-dotnet#synchronous-js-interop-in-client-side-components>.
+> For more information on <xref:Microsoft.JSInterop.IJSInProcessRuntime>, see <xref:blazor/js-interop/call-javascript-from-dotnet#invoke-javascript-functions-without-reading-a-returned-value-invokevoidasync>.
 
 In the `.Client` project, place the following `CultureClient` component to study how globalization works for CSR components.
 
@@ -1522,6 +1638,12 @@ To create localization shared resources, adopt the following approach.
 
 For additional guidance, see <xref:fundamentals/localization>.
 
+## Location override using "Sensors" pane in developer tools
+
+When using the location override using the **Sensors** pane in Google Chrome or Microsoft Edge developer tools, the fallback language is reset after prerendering. Avoid setting the language using the **Sensors** pane when testing. Set the language using the browser's language settings.
+
+For more information, see [Blazor Localization does not work with InteractiveServer (`dotnet/aspnetcore` #53707)](https://github.com/dotnet/aspnetcore/issues/53707).
+
 ## Additional resources
 
 * [Set the app base path](xref:blazor/host-and-deploy/index#app-base-path)
@@ -1531,3 +1653,4 @@ For additional guidance, see <xref:fundamentals/localization>.
 * [Microsoft Multilingual App Toolkit](https://marketplace.visualstudio.com/items?itemName=MultilingualAppToolkit.MultilingualAppToolkit-18308)
 * [Localization & Generics](http://hishambinateya.com/localization-and-generics)
 * [Calling `InvokeAsync(StateHasChanged)` causes page to fallback to default culture (dotnet/aspnetcore #28521)](https://github.com/dotnet/aspnetcore/issues/28521)
+* [Blazor Localization does not work with InteractiveServer (`dotnet/aspnetcore` #53707)](https://github.com/dotnet/aspnetcore/issues/53707) ([Location override using "Sensors" pane](#location-override-using-sensors-pane-in-developer-tools))

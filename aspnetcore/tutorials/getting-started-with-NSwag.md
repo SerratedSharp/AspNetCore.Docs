@@ -29,7 +29,7 @@ Install NSwag to:
 * Serve the Swagger UI to browse and test the web API.
 * Serve the Redoc to add API documentation for the Web API.
 
-To use the [NSwag](https://github.com/RicoSuter/NSwag) ASP.NET Core middleware, install the [NSwag.AspNetCore](https://www.nuget.org/packages/NSwag.AspNetCore/) NuGet package. This package contains the middleware to generate and serve the Swagger specification, Swagger UI (v2 and v3), and [ReDoc UI](https://github.com/Rebilly/ReDoc).
+To use the [NSwag](https://github.com/RicoSuter/NSwag) ASP.NET Core middleware, install the [NSwag.AspNetCore](https://www.nuget.org/packages/NSwag.AspNetCore/) NuGet package. This package contains the middleware to generate and serve the Swagger specification, Swagger UI (v2 and v3), and [ReDoc UI](https://github.com/Rebilly/ReDoc). NSwag 14 supports only v3 of the Swagger UI spec.
 
 Use one of the following approaches to install the NSwag NuGet package:
 
@@ -65,7 +65,7 @@ Run the following command from the **Integrated Terminal**:
 dotnet add NSwagSample.csproj package NSwag.AspNetCore
 ```
 
-### [.NET Core CLI](#tab/netcore-cli)
+### [.NET CLI](#tab/net-cli)
 
 Run the following command:
 
@@ -161,7 +161,7 @@ Manually add the highlighted lines to the `.csproj` file:
 
 :::code language="xml" source="web-api-help-pages-using-swagger/samples/7.x/NSwagSample/NSwagSample.csproj" id="snippet_GenerateDocumentationFile" highlight="2":::
 
-#### [.NET Core CLI](#tab/netcore-cli)
+#### [.NET CLI](#tab/net-cli)
 
 Manually add the highlighted lines to the `.csproj` file:
 
@@ -283,7 +283,7 @@ Run the following command from the **Integrated Terminal**:
 dotnet add TodoApi.csproj package NSwag.AspNetCore
 ```
 
-### [.NET Core CLI](#tab/netcore-cli)
+### [.NET CLI](#tab/net-cli)
 
 Run the following command:
 
@@ -425,7 +425,7 @@ Manually add the highlighted lines to the `.csproj` file:
 
 [!code-xml[](../tutorials/web-api-help-pages-using-swagger/samples/2.1/TodoApi.NSwag/TodoApi.csproj?name=snippet_DocumentationFileElement&highlight=1-2,4)]
 
-#### [.NET Core CLI](#tab/netcore-cli)
+#### [.NET CLI](#tab/net-cli)
 
 Manually add the highlighted lines to the `.csproj` file:
 

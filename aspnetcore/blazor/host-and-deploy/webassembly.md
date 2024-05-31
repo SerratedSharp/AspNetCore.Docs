@@ -4,7 +4,7 @@ author: guardrex
 description: Learn how to host and deploy Blazor WebAssembly using ASP.NET Core, Content Delivery Networks (CDN), file servers, and GitHub Pages.
 monikerRange: '>= aspnetcore-3.1'
 ms.author: riande
-ms.custom: mvc
+ms.custom: mvc, linux-related-content
 ms.date: 02/09/2024
 uid: blazor/host-and-deploy/webassembly
 ---
@@ -13,6 +13,12 @@ uid: blazor/host-and-deploy/webassembly
 [!INCLUDE[](~/includes/not-latest-version.md)]
 
 This article explains how to host and deploy Blazor WebAssembly using ASP.NET Core, Content Delivery Networks (CDN), file servers, and GitHub Pages.
+
+<!-- UPDATE 9.0 Remove CAUTION at 9.0 GA or
+                when we update CentOS guidance -->
+
+> [!CAUTION]
+> This article references CentOS, a Linux distribution that's nearing End Of Life (EOL) status. Please consider your use and plan accordingly. For more information, see the [CentOS](#centos) section of this article.
 
 With the [Blazor WebAssembly hosting model](xref:blazor/hosting-models#blazor-webassembly):
 
@@ -35,115 +41,39 @@ The following deployment strategies are supported:
 
 :::moniker-end
 
+## Decrease maximum heap size for some mobile device browsers
+
+:::moniker range=">= aspnetcore-8.0"
+
+When building a Blazor app that runs on the client (`.Client` project of a Blazor Web App or standalone Blazor WebAssembly app) and targets mobile device browsers, especially Safari on iOS, decreasing the maximum memory for the app with the MSBuild property `EmccMaximumHeapSize` may be required. The default value is 2,147,483,648 bytes, which may be too large and result in the app crashing if the app attempts to allocate more memory with the browser failing to grant it. The following example sets the value to 268,435,456 bytes in the `Program` file:
+
+:::moniker-end
+
+:::moniker range="< aspnetcore-8.0"
+
+When building a Blazor WebAssembly app that targets mobile device browsers, especially Safari on iOS, decreasing the maximum memory for the app with the MSBuild property `EmccMaximumHeapSize` may be required. The default value is 2,147,483,648 bytes, which may be too large and result in the app crashing if the app attempts to allocate more memory with the browser failing to grant it. The following example sets the value to 268,435,456 bytes in the `Program` file:
+
+:::moniker-end
+
+```xml
+<EmccMaximumHeapSize>268435456</EmccMaximumHeapSize>
+```
+
+For more information on [Mono](https://github.com/mono/mono)/WebAssembly MSBuild properties and targets, see [`WasmApp.Common.targets` (`dotnet/runtime` GitHub repository)](https://github.com/dotnet/runtime/blob/main/src/mono/wasm/build/WasmApp.Common.targets).
+
 :::moniker range=">= aspnetcore-8.0"
 
 ## Webcil packaging format for .NET assemblies
 
 [Webcil](https://github.com/dotnet/runtime/blob/main/docs/design/mono/webcil.md) is a web-friendly packaging format for .NET assemblies designed to enable using Blazor WebAssembly in restrictive network environments. Webcil files use a standard WebAssembly wrapper, where the assemblies are deployed as WebAssembly files that use the standard `.wasm` file extension.
 
-Webcil is the default packaging format when you publish a Blazor WebAssembly app. To disable the use of Webcil, set the following MS Build property in the app's project file:
+Webcil is the default packaging format when you publish a Blazor WebAssembly app. To disable the use of Webcil, set the following MSBuild property in the app's project file:
 
 ```xml
 <PropertyGroup>
   <WasmEnableWebcil>false</WasmEnableWebcil>
 </PropertyGroup>
 ```
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0"
-
-## Ahead-of-time (AOT) compilation
-
-Blazor WebAssembly supports ahead-of-time (AOT) compilation, where you can compile your .NET code directly into WebAssembly. AOT compilation results in runtime performance improvements at the expense of a larger app size.
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-8.0"
-
-Without enabling AOT compilation, Blazor WebAssembly apps run on the browser using a .NET [Intermediate Language (IL)](/dotnet/standard/glossary#il) interpreter implemented in WebAssembly with partial [just-in-time (JIT)](/dotnet/standard/glossary#jit) runtime support, informally referred to as the *Jiterpreter*. Because the .NET IL code is interpreted, apps typically run slower than they would on a server-side .NET JIT runtime without any IL interpretation. AOT compilation addresses this performance issue by compiling an app's .NET code directly into WebAssembly for native WebAssembly execution by the browser. The AOT performance improvement can yield dramatic improvements for apps that execute CPU-intensive tasks. The drawback to using AOT compilation is that AOT-compiled apps are generally larger than their IL-interpreted counterparts, so they usually take longer to download to the client when first requested.
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0 < aspnetcore-8.0"
-
-Without enabling AOT compilation, Blazor WebAssembly apps run on the browser using a .NET [Intermediate Language (IL)](/dotnet/standard/glossary#il) interpreter implemented in WebAssembly. Because the .NET code is interpreted, apps typically run slower than they would on a server-side .NET [just-in-time (JIT)](/dotnet/standard/glossary#jit) runtime. AOT compilation addresses this performance issue by compiling an app's .NET code directly into WebAssembly for native WebAssembly execution by the browser. The AOT performance improvement can yield dramatic improvements for apps that execute CPU-intensive tasks. The drawback to using AOT compilation is that AOT-compiled apps are generally larger than their IL-interpreted counterparts, so they usually take longer to download to the client when first requested.
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0"
-
-For guidance on installing the .NET WebAssembly build tools, see <xref:blazor/tooling#net-webassembly-build-tools>.
-
-To enable WebAssembly AOT compilation, add the `<RunAOTCompilation>` property set to `true` to the Blazor WebAssembly app's project file:
-
-```xml
-<PropertyGroup>
-  <RunAOTCompilation>true</RunAOTCompilation>
-</PropertyGroup>
-```
-
-To compile the app to WebAssembly, publish the app. Publishing the `Release` configuration ensures the .NET Intermediate Language (IL) linking is also run to reduce the size of the published app:
-
-```dotnetcli
-dotnet publish -c Release
-```
-
-WebAssembly AOT compilation is only performed when the project is published. AOT compilation isn't used when the project is run during development (`Development` environment) because AOT compilation usually takes several minutes on small projects and potentially much longer for larger projects. Reducing the build time for AOT compilation is under development for future releases of ASP.NET Core.
-
-The size of an AOT-compiled Blazor WebAssembly app is generally larger than the size of the app if compiled into .NET IL:
-
-* Although the size difference depends on the app, most AOT-compiled apps are about twice the size of their IL-compiled versions. This means that using AOT compilation trades off load-time performance for runtime performance. Whether this tradeoff is worth using AOT compilation depends on your app. Blazor WebAssembly apps that are CPU intensive generally benefit the most from AOT compilation.
-
-* The larger size of an AOT-compiled app is due to two conditions:
-
-  * More code is required to represent high-level .NET IL instructions in native WebAssembly.
-  * AOT does ***not*** trim out managed DLLs when the app is published. Blazor requires the DLLs for [reflection metadata](/dotnet/csharp/advanced-topics/reflection-and-attributes/) and to support certain .NET runtime features. Requiring the DLLs on the client increases the download size but provides a more compatible .NET experience.
-
-> [!NOTE]
-> For [Mono](https://github.com/mono/mono)/WebAssembly MSBuild properties and targets, see [`WasmApp.Common.targets` (`dotnet/runtime` GitHub repository)](https://github.com/dotnet/runtime/blob/main/src/mono/wasm/build/WasmApp.Common.targets). Official documentation for common MSBuild properties is planned per [Document blazor msbuild configuration options (`dotnet/docs` #27395)](https://github.com/dotnet/docs/issues/27395).
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-8.0"
-
-## Trim .NET IL after ahead-of-time (AOT) compilation
-
-The `WasmStripILAfterAOT` MSBuild option enables removing the .NET Intermediate Language (IL) for compiled methods after performing AOT compilation to WebAssembly, which reduces the size of the `_framework` folder.
-
-In the app's project file:
-
-```xml
-<PropertyGroup>
-  <RunAOTCompilation>true</RunAOTCompilation>
-  <WasmStripILAfterAOT>true</WasmStripILAfterAOT>
-</PropertyGroup>
-```
-
-This setting trims away the IL code for most compiled methods, including methods from libraries and methods in the app. Not all compiled methods can be trimmed, as some are still required by the .NET interpreter at runtime.
-
-To report a problem with the trimming option, [open an issue on the `dotnet/runtime` GitHub repository](https://github.com/dotnet/runtime/issues).
-
-Disable the trimming property if it prevents your app from running normally:
-
-```xml
-<WasmStripILAfterAOT>false</WasmStripILAfterAOT>
-```
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0"
-
-## Runtime relinking
-
-One of the largest parts of a Blazor WebAssembly app is the WebAssembly-based .NET runtime (`dotnet.wasm`) that the browser must download when the app is first accessed by a user's browser. Relinking the .NET WebAssembly runtime trims unused runtime code and thus improves download speed.
-
-Runtime relinking requires installation of the .NET WebAssembly build tools. For more information, see <xref:blazor/tooling#net-webassembly-build-tools>.
-
-With the .NET WebAssembly build tools installed, runtime relinking is performed automatically when an app is **published** in the `Release` configuration. The size reduction is particularly dramatic when disabling globalization. For more information, see <xref:blazor/globalization-localization#invariant-globalization>.
-
-> [!IMPORTANT]
-> Runtime relinking trims class instance JavaScript-invokable .NET methods unless they're protected. For more information, see <xref:blazor/js-interop/call-dotnet-from-javascript#avoid-trimming-javascript-invokable-net-methods>.
 
 :::moniker-end
 
@@ -403,7 +333,7 @@ For more information, see <xref:blazor/host-and-deploy/multiple-hosted-webassemb
 
 A *standalone deployment* serves the Blazor WebAssembly app as a set of static files that are requested directly by clients. Any static file server is able to serve the Blazor app.
 
-Standalone deployment assets are published into the `/bin/Release/{TARGET FRAMEWORK}/publish/wwwroot` folder.
+Standalone deployment assets are published into either the `/bin/Release/{TARGET FRAMEWORK}/publish/wwwroot` or `bin\Release\{TARGET FRAMEWORK}\browser-wasm\publish\` folder (depending on the version of the .NET SDK in use), where the `{TARGET FRAMEWORK}` placeholder is the target framework.
 
 ### Azure App Service
 
@@ -641,13 +571,31 @@ Increase the value if browser developer tools or a network traffic tool indicate
 
 For more information on production Nginx web server configuration, see [Creating NGINX Plus and NGINX Configuration Files](https://docs.nginx.com/nginx/admin-guide/basic-functionality/managing-configuration-files/).
 
+### CentOS
+
+<!-- UPDATE 9.0 Update future tense, and we'll 
+                need to completely update the 
+                following "Apache" section to use
+                a different Linux distribution. 
+                Currently, this is tracked by
+                the UE issue. -->
+
+On June 30, 2024, CentOS reaches End Of Life (EOL) status and will no longer be supported with web servers for Blazor WebAssembly hosting. For more information, see the following resources:
+
+* [CentOS Stream: Building an innovative future for enterprise Linux](https://www.redhat.com/blog/centos-stream-building-innovative-future-enterprise-linux)
+* [CentOS End Of Life guidance](/azure/virtual-machines/workloads/centos/centos-end-of-life)
+
+:::moniker range="< aspnetcore-9.0"
+
 ### Apache
 
 To deploy a Blazor WebAssembly app to CentOS 7 or later:
 
 1. Create the Apache configuration file. The following example is a simplified configuration file (`blazorapp.config`):
 
-:::moniker range=">= aspnetcore-8.0"
+:::moniker-end
+
+:::moniker range=">= aspnetcore-8.0 < aspnetcore-9.0"
 
    ```
    <VirtualHost *:80>
@@ -722,6 +670,8 @@ To deploy a Blazor WebAssembly app to CentOS 7 or later:
 
 :::moniker-end
 
+:::moniker range="< aspnetcore-9.0"
+
 1. Place the Apache configuration file into the `/etc/httpd/conf.d/` directory, which is the default Apache configuration directory in CentOS 7.
 
 1. Place the app's files into the `/var/www/blazorapp` directory (the location specified to `DocumentRoot` in the configuration file).
@@ -730,11 +680,13 @@ To deploy a Blazor WebAssembly app to CentOS 7 or later:
 
 For more information, see [`mod_mime`](https://httpd.apache.org/docs/2.4/mod/mod_mime.html) and [`mod_deflate`](https://httpd.apache.org/docs/current/mod/mod_deflate.html).
 
+:::moniker-end
+
 ### GitHub Pages
 
 The default GitHub Action, which deploys pages, skips deployment of folders starting with underscore, for example, the `_framework` folder. To deploy folders starting with underscore, add an empty `.nojekyll` file to the Git branch.
 
-Git treats JavaScript (JS) files, such as `blazor.webassembly.js`, as text and converts line endings from CRLF (carriage return-line feed) to LF (line feed) in the deployment pipeline. These changes to JS files produce different file hashes than Blazor sends to the client in the `blazor.boot.json` file. The mismatches result in integrity check failures on the client. One approach to solving this problem is to add a `.gitattributes` file with `*.js binary` line before adding the app's assets to the Git branch. The `*.js binary` line configures Git to treat JS files as binary files, which avoids processing the files in the deployment pipeline. The file hashes of the unprocessed files match the entries in the `blazor.boot.json` file, and client-side integrity checks pass. For more information, see the [Resolve integrity check failures](#resolve-integrity-check-failures) section.
+Git treats JavaScript (JS) files, such as `blazor.webassembly.js`, as text and converts line endings from CRLF (carriage return-line feed) to LF (line feed) in the deployment pipeline. These changes to JS files produce different file hashes than Blazor sends to the client in the `blazor.boot.json` file. The mismatches result in integrity check failures on the client. One approach to solving this problem is to add a `.gitattributes` file with `*.js binary` line before adding the app's assets to the Git branch. The `*.js binary` line configures Git to treat JS files as binary files, which avoids processing the files in the deployment pipeline. The file hashes of the unprocessed files match the entries in the `blazor.boot.json` file, and client-side integrity checks pass. For more information, see <xref:blazor/host-and-deploy/webassembly-caching/index>.
 
 To handle URL rewrites, add a `wwwroot/404.html` file with a script that handles redirecting the request to the `index.html` page. For an example, see the [`SteveSandersonMS/BlazorOnGitHubPages` GitHub repository](https://github.com/SteveSandersonMS/BlazorOnGitHubPages):
 
@@ -1287,112 +1239,3 @@ To disable integrity checking, remove the `integrity` parameter by changing the 
 ```
 
 Again, disabling integrity checking means that you lose the safety guarantees offered by integrity checking. For example, there is a risk that if the user's browser is caching the app at the exact moment that you deploy a new version, it could cache some files from the old deployment and some from the new deployment. If that happens, the app becomes stuck in a broken state until you deploy a further update.
-
-:::moniker range=">= aspnetcore-6.0"
-
-## SignalR configuration
-
-[SignalR's hosting and scaling conditions](xref:signalr/publish-to-azure-web-app) apply to Blazor apps that use SignalR.
-
-### Transports
-
-Blazor works best when using [WebSockets](xref:fundamentals/websockets) as the SignalR transport due to lower latency, better reliability, and improved [security](xref:signalr/security). [Long Polling](https://github.com/dotnet/aspnetcore/blob/main/src/SignalR/docs/specs/TransportProtocols.md#long-polling-server-to-client-only) is used by SignalR when WebSockets isn't available or when the app is explicitly configured to use Long Polling. When deploying to Azure App Service, configure the app to use WebSockets in the Azure portal settings for the service. For details on configuring the app for Azure App Service, see the [SignalR publishing guidelines](xref:signalr/publish-to-azure-web-app).
-
-A console warning appears if Long Polling is utilized:
-
-> :::no-loc text="Failed to connect via WebSockets, using the Long Polling fallback transport. This may be due to a VPN or proxy blocking the connection.":::
-
-### Global deployment and connection failures
-
-Recommendations for global deployments to geographical data centers:
-
-* Deploy the app to the regions where most of the users reside.
-* Take into consideration the increased latency for traffic across continents.
-* For Azure hosting, use the [Azure SignalR Service](/azure/azure-signalr/signalr-overview).
-
-If a deployed app frequently displays the reconnection UI due to ping timeouts caused by Internet latency, lengthen the server and client timeouts:
-
-* **Server**
-
-  At least double the maximum roundtrip time expected between the client and the server. Test, monitor, and revise the timeouts as needed. For the SignalR hub, set the <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> (default: 30 seconds) and <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> (default: 15 seconds). The following example assumes that <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> uses the default value of 15 seconds.
-
-  > [!IMPORTANT]
-  > The <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> isn't directly related to the reconnection UI appearing. The Keep-Alive interval doesn't necessarily need to be changed. If the reconnection UI appearance issue is due to timeouts, the <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> and <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> can be increased and the Keep-Alive interval can remain the same. The important consideration is that if you change the Keep-Alive interval, make sure that the client timeout value is at least double the value of the Keep-Alive interval and that the Keep-Alive interval on the client matches the server setting.
-  >
-  > In the following example, the <xref:Microsoft.AspNetCore.SignalR.HubOptions.ClientTimeoutInterval> is increased to 60 seconds, and the <xref:Microsoft.AspNetCore.SignalR.HubOptions.HandshakeTimeout> is increased to 30 seconds.
-
-  In the `Program` file of the server app:
-
-   ```csharp
-   builder.Services.AddSignalR(options =>
-   {
-       options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
-       options.HandshakeTimeout = TimeSpan.FromSeconds(30);
-   });
-   ```
-
-  For more information, see <xref:blazor/fundamentals/signalr#server-side-circuit-handler-options>.
-
-* **Client**
-
-  Typically, double the value used for the server's <xref:Microsoft.AspNetCore.SignalR.HubOptions.KeepAliveInterval> to set the timeout for the client's server timeout (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout>, default: 30 seconds).
-
-  > [!IMPORTANT]
-  > The Keep-Alive interval (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.KeepAliveInterval>) isn't directly related to the reconnection UI appearing. The Keep-Alive interval doesn't necessarily need to be changed. If the reconnection UI appearance issue is due to timeouts, the server timeout can be increased and the Keep-Alive interval can remain the same. The important consideration is that if you change the Keep-Alive interval, make sure that the timeout value is at least double the value of the Keep-Alive interval and that the Keep-Alive interval on the server matches the client setting.
-
-  When creating a hub connection in a component, you can customize the <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout> (default: 30 seconds) and <xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.HandshakeTimeout> (default: 15 seconds) values as necessary.
-
-  In the following example, the server timeout is increased to 60 seconds, and the handshake timeout is increased to 30 seconds:
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-8.0"
-
-  ```csharp
-  protected override async Task OnInitializedAsync()
-  {
-      hubConnection = new HubConnectionBuilder()
-          .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-          .WithServerTimeout(TimeSpan.FromSeconds(60))
-          .Build();
-
-      hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(30);
-
-      hubConnection.On<string, string>("ReceiveMessage", (user, message) => ...
-
-      await hubConnection.StartAsync();
-  }
-  ```
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0 < aspnetcore-8.0"
-
-  ```csharp
-  protected override async Task OnInitializedAsync()
-  {
-      hubConnection = new HubConnectionBuilder()
-          .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-          .Build();
-
-      hubConnection.ServerTimeout = TimeSpan.FromSeconds(60);
-      hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(30);
-
-      hubConnection.On<string, string>("ReceiveMessage", (user, message) => ...
-
-      await hubConnection.StartAsync();
-  }
-  ```
-
-:::moniker-end
-
-:::moniker range=">= aspnetcore-6.0"
-
-  When changing the values of the server timeout (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.ServerTimeout>) or the Keep-Alive interval (<xref:Microsoft.AspNetCore.SignalR.Client.HubConnection.KeepAliveInterval>:
-
-  * The server timeout should be at least double the value assigned to the Keep-Alive interval.
-  * The Keep-Alive interval should be less than or equal to half the value assigned to the server timeout.
-
-For more information, see <xref:blazor/fundamentals/signalr#configure-signalr-timeouts-and-keep-alive-on-the-client>.
-
-:::moniker-end

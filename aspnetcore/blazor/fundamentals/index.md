@@ -39,6 +39,9 @@ Razor components are either *statically* rendered or *interactively* rendered.
 
 *Interactive* or *interactive rendering* means that the component has the capacity to process .NET events via C# code. The .NET events are either processed on the server by the ASP.NET Core runtime or in the browser on the client by the WebAssembly-based Blazor runtime.
 
+> [!IMPORTANT]
+> When using a Blazor Web App, most of the Blazor documentation example components ***require*** interactivity to function and demonstrate the concepts covered by the articles. When you test an example component provided by an article, make sure that either the app adopts global interactivity or the component adopts an interactive render mode.
+
 More information on these concepts and how to control static and interactive rendering is found in the <xref:blazor/components/render-modes> article later in the Blazor documentation.
 
 :::moniker-end
@@ -171,9 +174,11 @@ Samples apps in the repository:
 * Blazor WebAssembly
 * Blazor Web App with EF Core (<xref:blazor/blazor-ef-core>)
 * Blazor Web App with SignalR (<xref:blazor/tutorials/signalr-blazor>)
-* Blazor Web App with OIDC (<xref:blazor/security/blazor-web-app-oidc>)
+* Two Blazor Web Apps and a Blazor WebAssembly app for calling web (server) APIs (<xref:blazor/call-web-api>)
+* Blazor Web App with OIDC (BFF and non-BFF patterns) (<xref:blazor/security/blazor-web-app-oidc>)
 * Blazor WebAssembly scopes-enabled logging (<xref:blazor/fundamentals/logging#client-side-log-scopes>)
 * Blazor WebAssembly with ASP.NET Core Identity (<xref:blazor/security/webassembly/standalone-with-identity>)
+* .NET MAUI Blazor Hybrid app with a Blazor Web App and a shared UI provided by a Razor class library (RCL) (<xref:blazor/hybrid/tutorials/maui-blazor-web-app>)
 
 :::moniker-end
 

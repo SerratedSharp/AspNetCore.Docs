@@ -33,7 +33,7 @@ The word *progressive* is used to describe these apps because:
 
 When creating a new **Blazor WebAssembly App**, select the **Progressive Web Application** checkbox.
 
-# [Visual Studio Code / .NET Core CLI](#tab/visual-studio-code+netcore-cli)
+# [Visual Studio Code / .NET CLI](#tab/visual-studio-code+net-cli)
 
 Use the following command to create a PWA project in a command shell with the `--pwa` switch:
 
@@ -403,5 +403,5 @@ The [`CarChecker`](https://github.com/SteveSandersonMS/CarChecker) sample app de
 
 ## Additional resources
 
-* [Troubleshoot integrity PowerShell script](xref:blazor/host-and-deploy/webassembly#troubleshoot-integrity-powershell-script)
+* [Troubleshoot integrity PowerShell script](xref:blazor/host-and-deploy/webassembly-caching/index#troubleshoot-integrity-powershell-script)
 * [Client-side SignalR cross-origin negotiation for authentication](xref:blazor/fundamentals/signalr#client-side-signalr-cross-origin-negotiation-for-authentication)

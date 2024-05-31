@@ -51,10 +51,13 @@ Standard HTML forms are supported. Create a form using the normal HTML `<form>` 
 
 In the preceding `StarshipPlainForm` component:
 
-* The form is rendered where the `<form>` element appears.
+* The form is rendered where the `<form>` element appears. The form is named with the [`@formname`](xref:mvc/views/razor#formname) directive attribute, which uniquely identifies the form to the Blazor framework.
 * The model is created in the component's `@code` block and held in a public property (`Model`). The `[SupplyParameterFromForm]` attribute indicates that the value of the associated property should be supplied from the form data. Data in the request that matches the property's name is bound to the property.
 * The <xref:Microsoft.AspNetCore.Components.Forms.InputText> component is an input component for editing string values. The `@bind-Value` directive attribute binds the `Model.Id` model property to the <xref:Microsoft.AspNetCore.Components.Forms.InputText> component's <xref:Microsoft.AspNetCore.Components.Forms.InputBase%601.Value%2A> property.
 * The `Submit` method is registered as a handler for the <!-- <xref:Microsoft.AspNetCore.Components.Forms.EditForm.OnSubmit> --> `@onsubmit` callback. The handler is called when the form is submitted by the user.
+
+> [!IMPORTANT]
+> Always use the [`@formname`](xref:mvc/views/razor#formname) directive attribute with a unique form name.
 
 Blazor enhances page navigation and form handling by intercepting the request in order to apply the response to the existing DOM, preserving as much of the rendered form as possible. The enhancement avoids the need to fully load the page and provides a much smoother user experience, similar to a single-page app (SPA), although the component is rendered on the server. For more information, see <xref:blazor/fundamentals/routing#enhanced-navigation-and-form-handling>.
 
@@ -65,9 +68,6 @@ Blazor enhances page navigation and form handling by intercepting the request in
 The preceding example includes antiforgery support by including an <xref:Microsoft.AspNetCore.Components.Forms.AntiforgeryToken> component in the form. Antiforgery support is explained further in the [Antiforgery support](#antiforgery-support) section of this article.
 
 To submit a form based on another element's DOM events, for example `oninput` or `onblur`, use JavaScript to submit the form ([`submit` (MDN documentation)](https://developer.mozilla.org/docs/Web/API/HTMLFormElement/submit)).
-
-> [!IMPORTANT]
-> For an HTML form, always use the `@formname` attribute directive to assign the form's name.
 
 Instead of using plain forms in Blazor apps, a form is typically defined with Blazor's built-in form support using the framework's <xref:Microsoft.AspNetCore.Components.Forms.EditForm> component. The following Razor component demonstrates typical elements, components, and Razor code to render a webform using an <xref:Microsoft.AspNetCore.Components.Forms.EditForm> component.
 
@@ -87,10 +87,13 @@ A form is defined using the Blazor framework's <xref:Microsoft.AspNetCore.Compon
 
 In the preceding `Starship1` component:
 
-* The <xref:Microsoft.AspNetCore.Components.Forms.EditForm> component is rendered where the `<EditForm>` element appears.
-* The model is created in the component's `@code` block and held in a public property (`Model`). The property is assigned to  <xref:Microsoft.AspNetCore.Components.Forms.EditForm.Model?displayProperty=nameWithType> is assigned to the <xref:Microsoft.AspNetCore.Components.Forms.EditForm.Model?displayProperty=nameWithType> parameter. The `[SupplyParameterFromForm]` attribute indicates that the value of the associated property should be supplied from the form data. Data in the request that matches the property's name is bound to the property.
+* The <xref:Microsoft.AspNetCore.Components.Forms.EditForm> component is rendered where the `<EditForm>` element appears. The form is named with the [`@formname`](xref:mvc/views/razor#formname) directive attribute, which uniquely identifies the form to the Blazor framework.
+* The model is created in the component's `@code` block and held in a public property (`Model`). The property is assigned to the <xref:Microsoft.AspNetCore.Components.Forms.EditForm.Model?displayProperty=nameWithType> parameter. The `[SupplyParameterFromForm]` attribute indicates that the value of the associated property should be supplied from the form data. Data in the request that matches the property's name is bound to the property.
 * The <xref:Microsoft.AspNetCore.Components.Forms.InputText> component is an [input component](xref:blazor/forms/input-components) for editing string values. The `@bind-Value` directive attribute binds the `Model.Id` model property to the <xref:Microsoft.AspNetCore.Components.Forms.InputText> component's <xref:Microsoft.AspNetCore.Components.Forms.InputBase%601.Value%2A> property.
 * The `Submit` method is registered as a handler for the <xref:Microsoft.AspNetCore.Components.Forms.EditForm.OnSubmit> callback. The handler is called when the form is submitted by the user.
+
+> [!IMPORTANT]
+> Always use the [`@formname`](xref:mvc/views/razor#formname) directive attribute with a unique form name.
 
 Blazor enhances page navigation and form handling for <xref:Microsoft.AspNetCore.Components.Forms.EditForm> components. For more information, see <xref:blazor/fundamentals/routing#enhanced-navigation-and-form-handling>.
 
@@ -201,9 +204,49 @@ The <xref:Microsoft.AspNetCore.Components.Forms.EditForm> provides the following
 * Use <xref:Microsoft.AspNetCore.Components.Forms.EditForm.OnInvalidSubmit> to assign an event handler to run when a form with invalid fields is submitted.
 * Use <xref:Microsoft.AspNetCore.Components.Forms.EditForm.OnSubmit> to assign an event handler to run regardless of the form fields' validation status. The form is validated by calling <xref:Microsoft.AspNetCore.Components.Forms.EditContext.Validate%2A?displayProperty=nameWithType> in the event handler method. If <xref:Microsoft.AspNetCore.Components.Forms.EditContext.Validate%2A> returns `true`, the form is valid.
 
+## Clear a form or field
+
+Reset a form by clearing its model back its default state, which can be performed inside or outside of an <xref:Microsoft.AspNetCore.Components.Forms.EditForm>'s markup:
+
+```razor
+<button @onclick="ClearForm">Clear form</button>
+
+...
+
+private void ClearForm() => Model = new();
+```
+
+Alternatively, use an explicit Razor expression:
+
+```razor
+<button @onclick="@(() => Model = new())">Clear form</button>
+```
+
+Reset a field by clearing its model value back to its default state:
+
+```razor
+<button @onclick="ResetId">Reset Identifier</button>
+
+...
+
+private void ResetId() => Model!.Id = string.Empty;
+```
+
+Alternatively, use an explicit Razor expression:
+
+```razor
+<button @onclick="@(() => Model!.Id = string.Empty)">Reset Identifier</button>
+```
+
+There's no need to call <xref:Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged%2A> in the preceding examples because <xref:Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged%2A> is automatically called by the Blazor framework to rerender the component after an event handler is invoked. If an event handler isn't used to invoke the methods that clear a form or field, then developer code should call <xref:Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged%2A> to rerender the component.
+
 :::moniker range=">= aspnetcore-8.0"
 
 ## Antiforgery support
+
+Antiforgery services are automatically added to Blazor apps when <xref:Microsoft.Extensions.DependencyInjection.RazorComponentsServiceCollectionExtensions.AddRazorComponents%2A> is called in the `Program` file.
+
+The app uses Antiforgery Middleware by calling <xref:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery%2A> in its request processing pipeline in the `Program` file. <xref:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery%2A> is called after the call to <xref:Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseRouting%2A>. If there are calls to <xref:Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseRouting%2A> and <xref:Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseEndpoints%2A>, the call to <xref:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery%2A> must go between them. A call to <xref:Microsoft.AspNetCore.Builder.AntiforgeryApplicationBuilderExtensions.UseAntiforgery%2A> must be placed after calls to <xref:Microsoft.AspNetCore.Builder.AuthAppBuilderExtensions.UseAuthentication%2A> and <xref:Microsoft.AspNetCore.Builder.AuthorizationAppBuilderExtensions.UseAuthorization%2A>.
 
 The <xref:Microsoft.AspNetCore.Components.Forms.AntiforgeryToken> component renders an antiforgery token as a hidden field, and the `[RequireAntiforgeryToken]` attribute enables antiforgery protection. If an antiforgery check fails, a [`400 - Bad Request`](https://developer.mozilla.org/docs/Web/HTTP/Status/400) response is thrown and the form isn't processed.
 

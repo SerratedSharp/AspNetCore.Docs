@@ -231,7 +231,7 @@ The preceding `beforeStart` example only guarantees that the custom script loads
 > [!NOTE]
 > MVC and Razor Pages apps don't automatically load JS initializers. However, developer code can include a script to fetch the app's manifest and trigger the load of the JS initializers.
 
-For an examples of JS initializers, see the following resources:
+For examples of JS initializers, see the following resources:
 
 :::moniker-end
 
@@ -240,6 +240,7 @@ For an examples of JS initializers, see the following resources:
 * <xref:blazor/js-interop/ssr>
 * <xref:blazor/components/js-spa-frameworks#render-razor-components-from-javascript> (*`quoteContainer2` example*)
 * <xref:blazor/components/event-handling#custom-event-arguments> (*Custom clipboard paste event example*)
+* <xref:blazor/security/server/qrcodes-for-authenticator-apps>
 * [Basic Test App in the ASP.NET Core GitHub repository (`BasicTestApp.lib.module.js`)](https://github.com/dotnet/aspnetcore/blob/main/src/Components/test/testassets/BasicTestApp/wwwroot/BasicTestApp.lib.module.js)
 
 :::moniker-end
@@ -487,6 +488,8 @@ In the preceding example, the `{BLAZOR SCRIPT}` placeholder is the Blazor script
 When the `loadBootResource` function returns `null`, Blazor uses the default loading behavior for the resource. For example, the preceding code returns `null` for the `dotnetjs` boot resource (`dotnet.*.js`) because the `dotnetjs` boot resource must either return `null` for default loading behavior or a URI for the source of the `dotnetjs` boot resource.
 
 The `loadBootResource` function can also return a [`Response` promise](https://developer.mozilla.org/docs/Web/API/Response). For an example, see <xref:blazor/host-and-deploy/webassembly#compression>.
+
+For more information, see <xref:blazor/host-and-deploy/webassembly-caching/index>.
 
 ## Control headers in C# code
 

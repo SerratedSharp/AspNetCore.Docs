@@ -2,7 +2,7 @@
 title: Razor Pages with Entity Framework Core in ASP.NET Core - Tutorial 1 of 8
 author: tdykstra
 description: Shows how to create a Razor Pages app using Entity Framework Core
-ms.author: riande
+ms.author: tdykstra
 monikerRange: '>= aspnetcore-3.1'
 ms.custom: "mvc"
 ms.date: 11/11/2021
@@ -250,7 +250,7 @@ The following packages are automatically installed:
 
 # [Visual Studio Code](#tab/visual-studio-code)
 
-* Run the following .NET Core CLI commands to install required NuGet packages:
+* Run the following .NET CLI commands to install required NuGet packages:
 
   ```dotnetcli
   dotnet add package Microsoft.EntityFrameworkCore.SQLite
@@ -766,7 +766,7 @@ The following packages are automatically installed:
 
 # [Visual Studio Code](#tab/visual-studio-code)
 
-* Run the following .NET Core CLI commands to install required NuGet packages:
+* Run the following .NET CLI commands to install required NuGet packages:
 
   ```dotnetcli
   dotnet add package Microsoft.EntityFrameworkCore.SQLite -v 5.0.0-*
@@ -1268,7 +1268,7 @@ The following packages are automatically installed:
 
 # [Visual Studio Code](#tab/visual-studio-code)
 
-* Run the following .NET Core CLI commands to install required NuGet packages:
+* Run the following .NET CLI commands to install required NuGet packages:
 <!-- TO DO  After testing, Replace with
 [!INCLUDE[](~/includes/includes/add-EF-NuGet-SQLite-CLI.md)]
 remove dotnet tool install --global  below
