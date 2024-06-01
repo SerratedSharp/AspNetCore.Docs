@@ -16,7 +16,12 @@ A project using either one of the following project types:
 This isn't an exhaustive list, as other commercial and/or open-source platforms exist which enable compiling .NET code to WebAssemby and support code using `System.Runtime.InteropServices.JavaScript`.
 
 # JS Interop using JSImport
-The JSImport attribute is used to indicate that a method signature will proxy calls from .NET WebAssembly to a JavaScript method.  
+The JSImport attribute is applied to a .NET method to indicate that a corresponding JavaScript method should be called when the .NET method is called.  This allows .NET developers to define "imports" that allow access JavaScript, which enables .NET code to call into JavaScript.  Additionally, .NET Actions can be passed as parameters, which enables callback or event subscription patterns by allowing JavaScript to call these .NET actions.
+
+
+
+
+ a method signature will proxy calls from .NET WebAssembly to a JavaScript method.  
 
 Approaches of exposing types or methods from JS to C#.  Allows C# code to call into JS, or hold and pass references to JS objects.
 
