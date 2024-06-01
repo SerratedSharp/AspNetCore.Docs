@@ -15,6 +15,12 @@ A project using either one of the following project types:
 
 This isn't an exhaustive list, as other commercial and/or open-source platforms exist which enable compiling .NET code to WebAssemby and support code using `System.Runtime.InteropServices.JavaScript`.
 
+# JS Interop using JSImport
+The JSImport attribute is used to indicate that a method signature will proxy calls from .NET WebAssembly to a JavaScript method.  
+
+Approaches of exposing types or methods from JS to C#.  Allows C# code to call into JS, or hold and pass references to JS objects.
+
+
 ## Importing Static JS Methods
 
 This example imports an existing static JS method into C#.  Strictly speaking, `.log()` is an instance method of the `console` object.  However, as demonstrated here JSImport can be accessed using static semantics for instances available on global properties.
@@ -56,8 +62,8 @@ GlobalProxy.CallAlert("Hello World");
 
 This example assumes the Javascript file containing the Javascript callAlert declaration was loaded from an ES6 module, and thus the module name is passed to the JSImport attribute.  By contrast, the module name is ommitted in the prior example which imported `globalThis.console.log` directly.
 
-# JS Interop using JSImport
-Approaches of exposing types or methods from JS to C#.  Allows C# code to call into JS, or hold and pass references to JS objects.
+## Type Mappings
+
 
 ## JS Primitives
 
