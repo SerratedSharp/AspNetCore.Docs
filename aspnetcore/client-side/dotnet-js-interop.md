@@ -1,7 +1,7 @@
 
 # Interoperate with Javascript from .NET WebAssembly
 
-The System.Runtime.InteropServices.JavaScript namespace provides support for interop between a .NET WebAssembly and JavaScript.  This is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser. These scenarios include either Blazor WebAssembly apps as detailed in [JavaScript interop with ASP.NET Core Blazor](xref:blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and several other commercial or open-source .NET WebAssembly platforms which support JSImport/JSExport. 
+The System.Runtime.InteropServices.JavaScript namespace provides support for interop between a .NET WebAssembly and JavaScript and is colloquially referred to as JSImport/JSExport interop.  This is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser. These scenarios include either Blazor WebAssembly apps as detailed in [JavaScript interop with ASP.NET Core Blazor](xref:blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.
 
 ## Prerequisites 
 
@@ -11,14 +11,13 @@ A project using either one of the following project types:
 
 - A WebAssembly Browser App project setup according to [Run .NET from JavaScript](https://learn.microsoft.com/en-us/aspnet/core/client-side/dotnet-interop?view=aspnetcore-8.0) by completing [Prerequisites](https://learn.microsoft.com/en-us/aspnet/core/client-side/dotnet-interop?view=aspnetcore-8.0#prerequisites) and [Project Configuration](https://learn.microsoft.com/en-us/aspnet/core/client-side/dotnet-interop?view=aspnetcore-8.0#project-configuration).
     - Once you have installed the wasm-tools and wasm-expiremental workloads, a new project template will be available in Visual Studio's new project dialog called "WebAssembly Browser App".
-- A console project using Uno.Wasm.Bootstrap according to [Using the Bootstrapper](https://platform.uno/docs/articles/external/uno.wasm.bootstrap/doc/using-the-bootstrapper.html).
 - A Blazor client-side project setup according to [JavaScript JSImport/JSExport interop with ASP.NET Core Blazor](https://learn.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/import-export-interop?view=aspnetcore-8.0).
 
 This isn't an exhaustive list, as other commercial and/or open-source platforms exist which enable compiling .NET code to WebAssemby and support code using `System.Runtime.InteropServices.JavaScript`.
 
 ## Importing Static JS Methods
-s
-This example imports an existing static JS method into C#.  Strictly speaking, `.log()` is an instance method of the `console` object.  However, as dmeonstrated here, the .NET code does not need an object reference to access these methods, and the methods can be accessed using static semantics.
+
+This example imports an existing static JS method into C#.  Strictly speaking, `.log()` is an instance method of the `console` object.  However, as demonstrated here JSImport can be accessed using static semantics for instances available on global properties.
 
 ```C#
 public partial class GlobalProxy
@@ -28,7 +27,7 @@ public partial class GlobalProxy
     public static partial void ConsoleLog(string text);
 }
 
-//... called from WASM Program.cs Main():
+//... called from Program.cs Main() of a WASM project:
 GlobalProxy.ConsoleLog("Hello World");//We'd expect output to appear in the browser console
 ```
 
