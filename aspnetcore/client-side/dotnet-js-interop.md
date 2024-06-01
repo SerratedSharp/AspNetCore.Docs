@@ -1,7 +1,7 @@
 
 # Interoperate with Javascript from .NET WebAssembly
 
-The System.Runtime.InteropServices.JavaScript namespace provides support for interop between a .NET WebAssembly and JavaScript and is colloquially referred to as JSImport/JSExport interop.  This is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser. These scenarios include either Blazor WebAssembly apps as detailed in [JavaScript interop with ASP.NET Core Blazor](xref:blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.
+The System.Runtime.InteropServices.JavaScript namespace provides support for interop between a .NET WebAssembly and JavaScript and is colloquially referred to as JSImport/JSExport interop.  This is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser. These scenarios include either Blazor WebAssembly apps as detailed in [JavaScript interop with ASP.NET Core Blazor](../blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.
 
 ## Prerequisites 
 
