@@ -1,7 +1,9 @@
 
 # Interoperate with Javascript from .NET WebAssembly
 
-The System.Runtime.InteropServices.JavaScript namespace provides support for interop between a .NET WebAssembly and JavaScript and is colloquially referred to as JSImport/JSExport interop.  This is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser. These scenarios include either Blazor WebAssembly apps as detailed in [JavaScript interop with ASP.NET Core Blazor](../blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.
+The System.Runtime.InteropServices.JavaScript namespace provides support for interop between a .NET WebAssembly and JavaScript and is colloquially referred to as JSImport/JSExport interop, so named for the two most common attributes used to define desired interop.
+
+This is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser.  These scenarios include either Blazor WebAssembly apps as detailed in [JavaScript interop with ASP.NET Core Blazor](../blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.
 
 ## Prerequisites 
 
@@ -15,20 +17,14 @@ A project using either one of the following project types:
 
 This isn't an exhaustive list, as other commercial and/or open-source platforms exist which enable compiling .NET code to WebAssemby and support code using `System.Runtime.InteropServices.JavaScript`.
 
-# JS Interop using JSImport
-The JSImport attribute is applied to a .NET method to indicate that a corresponding JavaScript method should be called when the .NET method is called.  This allows .NET developers to define "imports" that allow access JavaScript, which enables .NET code to call into JavaScript.  Additionally, .NET Actions can be passed as parameters, which enables callback or event subscription patterns by allowing JavaScript to call these .NET actions.
+# JS Interop using JSImport/JSExport
+The JSImport attribute is applied to a .NET method to indicate that a corresponding JavaScript method should be called when the .NET method is called.  This allows .NET developers to define "imports" that enable .NET code to call into JavaScript.  Additionally, .NET Actions can be passed as parameters and JavaScript can invoke these .NET actions to support callback or event subscription patterns.
 
+The JSExport attribute is applied to a .NET method to expose it to JavaScript code.  This allows JavaScript code to initiate calls to the .NET method.
 
+## Importing JS Methods
 
-
- a method signature will proxy calls from .NET WebAssembly to a JavaScript method.  
-
-Approaches of exposing types or methods from JS to C#.  Allows C# code to call into JS, or hold and pass references to JS objects.
-
-
-## Importing Static JS Methods
-
-This example imports an existing static JS method into C#.  Strictly speaking, `.log()` is an instance method of the `console` object.  However, as demonstrated here JSImport can be accessed using static semantics for instances available on global properties.
+This example imports an existing static JS method into C#.  JSImport is limited to importing static methods or instance methods of objects accessible globally.  For example, `.log()` strictly speaking is an instance method of the `console` object, but can be accessed using static semantics since the instance is a globally accessible singleton.
 
 ```C#
 public partial class GlobalProxy
@@ -39,10 +35,10 @@ public partial class GlobalProxy
 }
 
 //... called from Program.cs Main() of a WASM project:
-GlobalProxy.ConsoleLog("Hello World");//We'd expect output to appear in the browser console
+GlobalProxy.ConsoleLog("Hello World");// Output would appear in the browser console
 ```
 
-The following demonstrates declaring and importing a static JS method. This JavaScript would informally be called a JS shim.  In this case it "shims" or fills the gap between the .NET implementation and existing JS capabilities/libraries.  As demonstrated later, a JS shim can also serve to encapsulate additional logic, and reduce the number objects or calls crossing the interop boundary.  JS declarations such as this would typically be loaded from a *.js module.  Some developers opt to implement shims in typescript, but it is important to be knowledgeable of the full JS typename to ensure the correct name is referenced by JSImport.
+The following demonstrates importing a method declared in JavaScript.
 
 Declaring a custom JS static method:
 ```JS
@@ -57,7 +53,7 @@ using System.Runtime.InteropServices.JavaScript;
 
 public partial class GlobalProxy
 {
-	[JSImport("globalThis.callAlert", "GlobalShim")]
+	[JSImport("globalThis.callAlert")]
 	public static partial void CallAlert(string text);
 }
 
@@ -65,9 +61,30 @@ public partial class GlobalProxy
 GlobalProxy.CallAlert("Hello World");
 ```
 
-This example assumes the Javascript file containing the Javascript callAlert declaration was loaded from an ES6 module, and thus the module name is passed to the JSImport attribute.  By contrast, the module name is ommitted in the prior example which imported `globalThis.console.log` directly.
+Note that the C# class declaring the JSImport method does not have an implementation.  At compile time a source generated partial class will contain the .NET code which implements the marshalling of the call and types to invoke the corresponding JavaScript.  In Visual Studio, using the Go To Definition or Go To Implementation options will respectively navigate to either the source generate partial class or the developer defined partial class.
+
+In this example, the intermediate `globalThis.callAlert` JavaScript declaration was used to wrap existing JavaScript. This article informally refers to the intermediate Javascript declaration as a JS shim.  In this case it can "shim" or fill the gap between the .NET implementation and existing JS capabilities/libraries.  In many cases, such as this trivial example, the JS shim is not necessary and methods could be imported directly.  As demonstrated later, sometimes a JS shim can serve to encapsulate additional logic, manually map types, reduce the number objects or calls crossing the interop boundary, and/or manually map static calls to instance methods.
+
+## Loading JavaScript Declarations
+
+JavaScript declarations which are intended to be imported with JSImport would typically be loaded in the context of the same webpage or JavaScript host which loaded the .NET WebAssembly.   This could be accomplished by:
+- A `<script>...</script>` tag declaring traditional JavaScript inline
+- A `<script src='./some.js'>` tag loading a traditional external *.js file
+- Loading a JavaScript ES6 module *.js file by using `JSHost.ImportAsync(...)` from the .NET WebAssembly
+- Loading a JavaScript ES6 module using `<script type='module' src="./moduleName.js"></script>` tag on the page
+
+When calling `JShost.ImportAsync(...)`, the client-side .NET WebAssembly will request the file using the `moduleUrl` parameter, and thus expects the file to be accessible as a static web asset much the same way as a `<script>` tag would retrieve a file with a `src` URL.  For example, if using the following C# code within a WebAssembly Browser App project, then the *.js file would be placed inside the project under `/wwwroot/scripts/ExampleShim.js`.
+
+```C#
+await JSHost.ImportAsync("ExampleShim", "./scripts/ExampleShim.js");
+```
+
+> [!IMPORTANT] 
+> If JavaScript is loaded from an ES6 module, then JSImport attributes must include the module name as the second parameter.  For example, `[JSImport("globalThis.callAlert", "ExampleShim")]` would indicate the imported method was declared in an ES6 module named "ExampleShim".
 
 ## Type Mappings
+
+
 
 
 ## JS Primitives
