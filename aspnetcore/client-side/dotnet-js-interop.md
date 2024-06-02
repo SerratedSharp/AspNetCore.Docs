@@ -82,17 +82,20 @@ await JSHost.ImportAsync("ExampleShim", "./scripts/ExampleShim.js");
 > [!IMPORTANT] 
 > If JavaScript is loaded from an ES6 module, then JSImport attributes must include the module name as the second parameter.  For example, `[JSImport("globalThis.callAlert", "ExampleShim")]` would indicate the imported method was declared in an ES6 module named "ExampleShim".
 
-
-
 ## Type Mappings
 
-Parameters and returns types in the .NET method signature will automatically be converted to/from appropriate JS types at runtime if a unique mapping is supported.  This may result in values being converted by value, or references being wrapped in a proxy type.  This process is known as type marshalling. Use <xref:System.Runtime.InteropServices.JavaScript.JSMarshalAsAttribute%601> to control how the imported method parameters and return types are marshalled. 
+Parameters and returns types in the .NET method signature will automatically be converted to/from appropriate JS types at runtime if a unique mapping is supported.  This may result in values being converted by value, or references being wrapped in a proxy type. This process is known as type marshalling. Use <xref:System.Runtime.InteropServices.JavaScript.JSMarshalAsAttribute%601> to control how the imported method parameters and return types are marshalled. 
 
 Some types do not have a default type mapping.  For example, a `long` can be marshalled as <xref:System.Runtime.InteropServices.JavaScript.JSType.Number?displayProperty=nameWithType> or <xref:System.Runtime.InteropServices.JavaScript.JSType.BigInt?displayProperty=nameWithType> and thus the `[JSMarsalAsAttibute]` is required or a compile time error will be generated.  
 
-An <xref:System.Action> or <xref:System.Func%601> can be passed as parameters, which are marshalled as callable JS functions which allow .NET code to be invoked in response to JS callbacks or events.
+Of note is support for the following type mapping scenarios:
+- An <xref:System.Action> or <xref:System.Func%601> can be passed as parameters and are marshalled as callable JS functions. This allows .NET code to provide listeners to be invoked in response to JS callbacks or events.
+- JS references and .NET managed object references can be passed in either direction, are marshaled as proxy objects, and are kept alive across the boundary until the proxy is garbage collected.
+- Asynchronous JS methods or [JS promises](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise) are marshalled with a <xref:System.Threading.Tasks.Task> result and vice versa. 
 
-You can pass both JS and managed object references, and they are marshaled as proxy objects, keeping the object alive across the boundary until the proxy is garbage collected. You can also import and export asynchronous methods with a <xref:System.Threading.Tasks.Task> result, which are marshaled as [JS promises](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise). Most of the marshalled types work in both directions, as parameters and as return values, on both imported and exported methods, which are covered in the [Call .NET from JavaScript](#call-net-from-javascript) section later in this article.
+Most of the marshalled types work in both directions, as parameters and as return values, on both imported and exported methods.  
+
+The following table details supported type mappings:
 
 :::moniker range=">= aspnetcore-8.0"
 
@@ -105,8 +108,6 @@ You can pass both JS and managed object references, and they are marshaled as pr
 [!INCLUDE[](~/blazor/includes/js-interop/7.0/import-export-interop-mappings.md)]
 
 :::moniker-end
-
-
 
 ## JS Primitives
 
