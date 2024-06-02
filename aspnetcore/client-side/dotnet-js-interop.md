@@ -1,7 +1,7 @@
 
 # Interoperate with JavaScript from .NET WebAssembly
 
-This article explains how use the API in the System.Runtime.InteropServices.JavaScript namespace to interact with JavaScript (JS) from client-side WebAssembly components that adopt .NET 7 or later.  This API is colloquially referred to as JSImport/JSExport interop, so named for the two most common attributes used to define desired interop.  
+This article explains how to use the API in the System.Runtime.InteropServices.JavaScript namespace to interact with JavaScript (JS) from client-side WebAssembly components that adopt .NET 7 or later.  This API is colloquially referred to as JSImport/JSExport interop, so named for the two most common attributes used to define desired interop.  
 
 This approach is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser.  These scenarios include either Blazor WebAssembly client-side components as detailed in [JavaScript interop with ASP.NET Core Blazor](../blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.  See the respective articles for examples specialized for these platforms.
 
@@ -108,6 +108,8 @@ The following table details supported type mappings:
 [!INCLUDE[](~/blazor/includes/js-interop/7.0/import-export-interop-mappings.md)]
 
 :::moniker-end
+
+Note, some combinations of type mappings that require nested generic types in `JSMarshalAs` are not currently supported.  For example, attempting to materialize an array from a JS promise such as `[return: JSMarshalAs<JSType.Promise<JSType.Array<JSType.Number>>>()]` will generate a compile time error.  An appropriate workaround will vary depending on the scenario, but this specific scenario explored in the [Type Mapping Limitations](#type-mapping-limitations)] section.
 
 ## JS Primitives
 
@@ -236,7 +238,7 @@ Demonstrates JSImport of methods which have a JS Date object as its return or pa
 
 ```JS
 // DateShim.js
-let DateShim = globalThis.DateShim;
+let DateShim = {};
 (function (DateShim) {
     
     DateShim.IncrementDay = function (date) {
@@ -468,15 +470,15 @@ public partial class PromisesProxy
 
     // If the JS method or shim returns a promise, then C# can treat it as an awaitable Task.
 
-    // For a promise with void type, declare a Task return type:
+    // For a promise with void return type, declare a Task return type:
     [JSImport("PromisesShim.Wait2Seconds", "PromisesShim")]
     public static partial Task Wait2Seconds();
 
     [JSImport("PromisesShim.WaitGetString", "PromisesShim")]
     public static partial Task<string> WaitGetString();
 
-    // Some return types require a [return: JSMarshalAs...] declaration indicating
-    // the type mapping returned within the promise corresponding to Task<T>.
+    // Some return types require a [return: JSMarshalAs...] declaring the
+    // Promise's return type corresponding to Task<T>.
     [JSImport("PromisesShim.WaitGetDate", "PromisesShim")]
     [return: JSMarshalAs<JSType.Promise<JSType.Date>>()]
     public static partial Task<DateTime> WaitGetDate();
@@ -549,7 +551,7 @@ One nuance of `removeEventListener()` is it requires a reference to the function
 
 ```JS
 // EventsShim.js
-let EventsShim = {}; //globalThis.EventsShim || {};
+let EventsShim = {};
 (function (EventsShim) {
 
     EventsShim.SubscribeEventById = function (elementId, eventName, listenerFunc) {
@@ -707,6 +709,48 @@ public static class EventsUsage
     // Unsubscribed btn1.
 }
 ```
+
+# Type Mapping Limitations
+
+Some type mappings requiring nested generic types in the `JSMarshalAs` definition are not currently supported.  For example, returning a JS promise for an array such as `[return: JSMarshalAs<JSType.Promise<JSType.Array<JSType.Number>>>()]` will generate a compile time error.  An appropriate workaround will vary depending on the scenario, but one option is to represent the array as a JSObject reference.  This may be sufficient if accessing individual elements within .NET is not necessary, and the reference can be passed to other JS methods which act on the array.  Alternatively, a dedicated method can take the JSObject reference as a parameter and return the materialized array as demonstrated by UnwrapJSObjectAsIntArray.  Note in this case the JS method has no type mapping, and it's the developer's responsbillity to ensure a JSObject wrapping the appropriate type is passed.
+
+```JS
+    PromisesShim.WaitGetIntArrayAsObject = function () {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve([1, 2, 3, 4, 5] ); // return an array from the Promise
+            }, 500);
+        });
+    };
+
+    PromisesShim.UnwrapJSObjectAsIntArray = function (jsObject) {
+        return jsObject;
+    };
+```
+
+```C#
+    // Not supported, generates compile time error.
+    [JSImport("PromisesShim.WaitGetArray", "PromisesShim")]
+    [return: JSMarshalAs<JSType.Promise<JSType.Array<JSType.Number>>>()]
+    public static partial Task<int[]> WaitGetIntArray();
+
+    // Workaround, take the return from this call and pass it to UnwrapJSObjectAsIntArray
+    // Return a JSObject reference to a JS number array
+    [JSImport("PromisesShim.WaitGetArray", "PromisesShim")]
+    [return: JSMarshalAs<JSType.Promise<JSType.Object>>()]
+    public static partial Task<JSObject> WaitGetIntArrayAsObject();
+
+    // Takes a JSOBject reference to a JS number array, and returns the array as a C# int array.
+    [JSImport("PromisesShim.WaitGetArray", "PromisesShim")]
+    [return: JSMarshalAs<JSType.Array<JSType.Number>>()]
+    public static partial int[] UnwrapJSObjectAsIntArray(JSObject intArray);
+    //...
+
+    // Usage from Program.cs Main():
+    JSObject arrayAsJSObject = await PromisesProxy.WaitGetIntArrayAsObject();          
+    int[] intArray = PromisesProxy.UnwrapJSObjectAsIntArray(arrayAsJSObject);
+```
+
 
 # Performance Considerations for Interop
 
