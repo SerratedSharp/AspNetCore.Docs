@@ -1,7 +1,7 @@
 
 # Interoperate with JavaScript from .NET WebAssembly
 
-This article explains how use the API in the System.Runtime.InteropServices.JavaScript namespace to interact with JavaScript (JS) in client-side WebAssembly  components using the interop API released for apps that adopt .NET 7 or later.  This API is colloquially referred to as JSImport/JSExport interop, so named for the two most common attributes used to define desired interop.  
+This article explains how use the API in the System.Runtime.InteropServices.JavaScript namespace to interact with JavaScript (JS) from client-side WebAssembly components that adopt .NET 7 or later.  This API is colloquially referred to as JSImport/JSExport interop, so named for the two most common attributes used to define desired interop.  
 
 This approach is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser.  These scenarios include either Blazor WebAssembly client-side components as detailed in [JavaScript interop with ASP.NET Core Blazor](../blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.  See the respective articles for examples specialized for these platforms.
 
