@@ -1,9 +1,9 @@
 
-# Interoperate with Javascript from .NET WebAssembly
+# Interoperate with JavaScript from .NET WebAssembly
 
-The System.Runtime.InteropServices.JavaScript namespace provides support for interop between a .NET WebAssembly and JavaScript and is colloquially referred to as JSImport/JSExport interop, so named for the two most common attributes used to define desired interop.
+This article explains how use the API in the System.Runtime.InteropServices.JavaScript namespace to interact with JavaScript (JS) in client-side WebAssembly  components using the interop API released for apps that adopt .NET 7 or later.  This API is colloquially referred to as JSImport/JSExport interop, so named for the two most common attributes used to define desired interop.  
 
-This is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser.  These scenarios include either Blazor WebAssembly apps as detailed in [JavaScript interop with ASP.NET Core Blazor](../blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.
+This approach is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser.  These scenarios include either Blazor WebAssembly client-side components as detailed in [JavaScript interop with ASP.NET Core Blazor](../blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.  See the respective articles for examples specialized for these platforms.
 
 ## Prerequisites 
 
@@ -38,7 +38,7 @@ public partial class GlobalProxy
 GlobalProxy.ConsoleLog("Hello World");// Output would appear in the browser console
 ```
 
-The following demonstrates importing a method declared in JavaScript.
+The following demonstrates importing a static method declared in JavaScript.
 
 Declaring a custom JS static method:
 ```JS
@@ -63,17 +63,17 @@ GlobalProxy.CallAlert("Hello World");
 
 Note that the C# class declaring the JSImport method does not have an implementation.  At compile time a source generated partial class will contain the .NET code which implements the marshalling of the call and types to invoke the corresponding JavaScript.  In Visual Studio, using the Go To Definition or Go To Implementation options will respectively navigate to either the source generate partial class or the developer defined partial class.
 
-In this example, the intermediate `globalThis.callAlert` JavaScript declaration was used to wrap existing JavaScript. This article informally refers to the intermediate Javascript declaration as a JS shim.  In this case it can "shim" or fill the gap between the .NET implementation and existing JS capabilities/libraries.  In many cases, such as this trivial example, the JS shim is not necessary and methods could be imported directly.  As demonstrated later, sometimes a JS shim can serve to encapsulate additional logic, manually map types, reduce the number objects or calls crossing the interop boundary, and/or manually map static calls to instance methods.
+In this example, the intermediate `globalThis.callAlert` JavaScript declaration was used to wrap existing JavaScript. This article informally refers to the intermediate JavaScript declaration as a JS shim.  In this case it can "shim" or fill the gap between the .NET implementation and existing JS capabilities/libraries.  In many cases, such as this trivial example, the JS shim is not necessary and methods could be imported directly.  As demonstrated later, sometimes a JS shim can serve to encapsulate additional logic, manually map types, reduce the number objects or calls crossing the interop boundary, and/or manually map static calls to instance methods.
 
 ## Loading JavaScript Declarations
 
 JavaScript declarations which are intended to be imported with JSImport would typically be loaded in the context of the same webpage or JavaScript host which loaded the .NET WebAssembly.   This could be accomplished by:
 - A `<script>...</script>` tag declaring traditional JavaScript inline
 - A `<script src='./some.js'>` tag loading a traditional external *.js file
-- Loading a JavaScript ES6 module *.js file by using `JSHost.ImportAsync(...)` from the .NET WebAssembly
 - Loading a JavaScript ES6 module using `<script type='module' src="./moduleName.js"></script>` tag on the page
+- Loading a JavaScript ES6 module *.js file by using `JSHost.ImportAsync(...)` from the .NET WebAssembly
 
-When calling `JShost.ImportAsync(...)`, the client-side .NET WebAssembly will request the file using the `moduleUrl` parameter, and thus expects the file to be accessible as a static web asset much the same way as a `<script>` tag would retrieve a file with a `src` URL.  For example, if using the following C# code within a WebAssembly Browser App project, then the *.js file would be placed inside the project under `/wwwroot/scripts/ExampleShim.js`.
+Examples in this article use `JSHost.ImportAsync(...)`.  When calling `JShost.ImportAsync(...)`, the client-side .NET WebAssembly will request the file using the `moduleUrl` parameter, and thus expects the file to be accessible as a static web asset much the same way as a `<script>` tag would retrieve a file with a `src` URL.  For example, if using the following C# code within a WebAssembly Browser App project, then the *.js file would be placed inside the project under `/wwwroot/scripts/ExampleShim.js`:
 
 ```C#
 await JSHost.ImportAsync("ExampleShim", "./scripts/ExampleShim.js");
@@ -82,8 +82,29 @@ await JSHost.ImportAsync("ExampleShim", "./scripts/ExampleShim.js");
 > [!IMPORTANT] 
 > If JavaScript is loaded from an ES6 module, then JSImport attributes must include the module name as the second parameter.  For example, `[JSImport("globalThis.callAlert", "ExampleShim")]` would indicate the imported method was declared in an ES6 module named "ExampleShim".
 
+
+
 ## Type Mappings
 
+Parameters and returns types in the .NET method signature will automatically be converted to/from appropriate JS types at runtime if a unique mapping is supported.  This may result in values being converted by value, or references being wrapped in a proxy type.  This process is known as type marshalling. Use <xref:System.Runtime.InteropServices.JavaScript.JSMarshalAsAttribute%601> to control how the imported method parameters and return types are marshalled. 
+
+Some types do not have a default type mapping.  For example, a `long` can be marshalled as <xref:System.Runtime.InteropServices.JavaScript.JSType.Number?displayProperty=nameWithType> or <xref:System.Runtime.InteropServices.JavaScript.JSType.BigInt?displayProperty=nameWithType> and thus the `[JSMarsalAsAttibute]` is required or a compile time error will be generated.  
+
+An <xref:System.Action> or <xref:System.Func%601> can be passed as parameters, which are marshalled as callable JS functions which allow .NET code to be invoked in response to JS callbacks or events.
+
+You can pass both JS and managed object references, and they are marshaled as proxy objects, keeping the object alive across the boundary until the proxy is garbage collected. You can also import and export asynchronous methods with a <xref:System.Threading.Tasks.Task> result, which are marshaled as [JS promises](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise). Most of the marshalled types work in both directions, as parameters and as return values, on both imported and exported methods, which are covered in the [Call .NET from JavaScript](#call-net-from-javascript) section later in this article.
+
+:::moniker range=">= aspnetcore-8.0"
+
+[!INCLUDE[](~/blazor/includes/js-interop/8.0/import-export-interop-mappings.md)]
+
+:::moniker-end
+
+:::moniker range="< aspnetcore-8.0"
+
+[!INCLUDE[](~/blazor/includes/js-interop/7.0/import-export-interop-mappings.md)]
+
+:::moniker-end
 
 
 
@@ -185,7 +206,7 @@ public static class PrimitivesUsage
         PrimitivesProxy.LogValueAndType(0x3A);// byte literal
         PrimitivesProxy.LogValueAndType('C');
         PrimitivesProxy.LogValueAndType((Int16)12);
-        // Note: Javascript Number has a lower max value and can generate overflow errors
+        // Note: JavaScript Number has a lower max value and can generate overflow errors
         PrimitivesProxy.LogValueAndTypeForNumber(9007199254740990L);// Int64/Long 
         PrimitivesProxy.LogValueAndTypeForBigInt(1234567890123456789L);// Int64/Long, JS BigInt supports larger numbers
         PrimitivesProxy.LogValueAndType(3.14f);// single floating point literal
@@ -359,11 +380,11 @@ public static class JSObjectUsage
 
 ## Asynchronous Interop
 
-Many Javascript APIs are asynchronous and signal completion through either a callback, promise, or async method.  Ignoring asynchonous capabilities is often not an option, as subsequent code may depend upon the completion of the asynchronous operation, and thus must be awaited.
+Many JavaScript APIs are asynchronous and signal completion through either a callback, promise, or async method.  Ignoring asynchonous capabilities is often not an option, as subsequent code may depend upon the completion of the asynchronous operation, and thus must be awaited.
 
 JS methods using the `async` keyword or returning a promise can be awaited in C# by a method returning a Task.  Note as demonstrated below, the `async` keyword is not used on the C# method with the JSImport attribute, because it does not use the `await` keyword within it.  However, consuming code calling the method would typically use the `await` keyword and be marked as `async` as demonstrated in the `PromisesUsage` example.
 
-Javascript with a callback, such as a `setTimeout()`, can be wrapped in a Promise before returning from Javascript.  Wrapping a callback in a promise as demonstated in `Wait2Seconds()` is only appropriate when the callback is called exactly once.  Otherwise, a C# Action can be passed to listen for a callback that may be called zero or many times, which is demonstrated in [Subscribing to JS Events](#Subscribing-to-JS-Events).
+JavaScript with a callback, such as a `setTimeout()`, can be wrapped in a Promise before returning from JavaScript.  Wrapping a callback in a promise as demonstated in `Wait2Seconds()` is only appropriate when the callback is called exactly once.  Otherwise, a C# Action can be passed to listen for a callback that may be called zero or many times, which is demonstrated in [Subscribing to JS Events](#Subscribing-to-JS-Events).
 
 ```JS
 // PromisesShim.js
@@ -504,7 +525,7 @@ public static class PromisesUsage
         }
         catch(JSException ex) // Catch javascript exception
         {
-            Console.WriteLine($"Javascript Exception Caught: '{ex.Message}'");
+            Console.WriteLine($"JavaScript Exception Caught: '{ex.Message}'");
         }       
         
     }
@@ -514,7 +535,7 @@ public static class PromisesUsage
     // Waited .5 seconds for WaitGetDate: '11/24/1988 12:00:00 AM'
     // responseText.Length: 582
     // Waited 2.0 seconds for AsyncFunction.
-    // Javascript Exception Caught: 'Reject: ShouldSucceed == false'
+    // JavaScript Exception Caught: 'Reject: ShouldSucceed == false'
 
 }
 ```
@@ -690,7 +711,7 @@ public static class EventsUsage
 
 Marshalling of calls and the overhead of tracking objects across the interop boundary is more expensive than native .NET operations, but for moderate usage should still demonstrate acceptable performance for a typical web application.
 
-Object proxies such as JSObject which maintain references across the interop boundary have additional memory overhead, and impact how garbage collection affects these objects.  Additionally, since memory pressure from Javascript and .NET is not shared, it is possible in some scenarios to exhaust available memory without a garbage collection being triggerred.  This risk is significant when an excessive number of large objects are referenced across interop by relatively small JSObject's, or vice versa where large .NET objects are referenced by JS proxies.  In such cases it is advisable to follow deterministic disposal patterns with `using` scopes leveraging JSObject's `IDisposable` interface.
+Object proxies such as JSObject which maintain references across the interop boundary have additional memory overhead, and impact how garbage collection affects these objects.  Additionally, since memory pressure from JavaScript and .NET is not shared, it is possible in some scenarios to exhaust available memory without a garbage collection being triggerred.  This risk is significant when an excessive number of large objects are referenced across interop by relatively small JSObject's, or vice versa where large .NET objects are referenced by JS proxies.  In such cases it is advisable to follow deterministic disposal patterns with `using` scopes leveraging JSObject's `IDisposable` interface.
 
 The below benchmarks (leveraging prior example code) demonstrate that interop operations are roughly an order of magnitude slower than those that remain within the .NET boundary, but are still relatively fast.  Additionally, consider that a user's device capabilities will impact performance.
 
