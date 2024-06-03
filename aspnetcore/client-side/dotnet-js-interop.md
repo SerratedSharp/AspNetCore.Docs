@@ -27,7 +27,7 @@ The JSExport attribute is applied to a .NET method to expose it to JavaScript co
 This example imports an existing static JS method into C#.  JSImport is limited to importing static methods or instance methods of objects accessible globally.  For example, `.log()` strictly speaking is an instance method of the `console` object, but can be accessed using static semantics since the instance is a globally accessible singleton.
 
 ```C#
-public partial class GlobalProxy
+public partial class GlobalInterop
 {
     // mapping existing console.log to a C# method
     [JSImport("globalThis.console.log")]
@@ -35,7 +35,7 @@ public partial class GlobalProxy
 }
 
 //... called from Program.cs Main() of a WASM project:
-GlobalProxy.ConsoleLog("Hello World");// Output would appear in the browser console
+GlobalInterop.ConsoleLog("Hello World");// Output would appear in the browser console
 ```
 
 The following demonstrates importing a static method declared in JavaScript.
@@ -51,14 +51,14 @@ Mapping to a C# method proxy:
 ```C# 
 using System.Runtime.InteropServices.JavaScript;
 
-public partial class GlobalProxy
+public partial class GlobalInterop
 {
 	[JSImport("globalThis.callAlert")]
 	public static partial void CallAlert(string text);
 }
 
 //... called from WASM Program.cs Main():
-GlobalProxy.CallAlert("Hello World");
+GlobalInterop.CallAlert("Hello World");
 ```
 
 Note that the C# class declaring the JSImport method does not have an implementation.  At compile time a source generated partial class will contain the .NET code which implements the marshalling of the call and types to invoke the corresponding JavaScript.  In Visual Studio, using the Go To Definition or Go To Implementation options will respectively navigate to either the source generated partial class or the developer defined partial class.
@@ -149,7 +149,7 @@ export { PrimitivesShim };
 using System.Runtime.InteropServices.JavaScript;
 using System.Threading.Tasks;
 
-public partial class PrimitivesProxy
+public partial class PrimitivesInterop
 {    
     // Importing an existing JS method.
     [JSImport("globalThis.console.log")]
@@ -197,25 +197,25 @@ public static class PrimitivesUsage
         await JSHost.ImportAsync("PrimitivesShim", "/PrimitivesShim.js");
 
         // Call a proxy to a static JS method, console.log("")
-        PrimitivesProxy.ConsoleLog("Printed from JSImport of console.log()");
+        PrimitivesInterop.ConsoleLog("Printed from JSImport of console.log()");
 
         // Basic examples of JS interop with an integer:       
-        PrimitivesProxy.IncrementCounter();
-        int counterValue = PrimitivesProxy.GetCounter();
-        PrimitivesProxy.LogInt(counterValue);
-        PrimitivesProxy.LogString("I'm a string from .NET in your browser!");
+        PrimitivesInterop.IncrementCounter();
+        int counterValue = PrimitivesInterop.GetCounter();
+        PrimitivesInterop.LogInt(counterValue);
+        PrimitivesInterop.LogString("I'm a string from .NET in your browser!");
 
         // Mapping some other .NET types to JS primitives:        
-        PrimitivesProxy.LogValueAndType(true);
-        PrimitivesProxy.LogValueAndType(0x3A);// byte literal
-        PrimitivesProxy.LogValueAndType('C');
-        PrimitivesProxy.LogValueAndType((Int16)12);
+        PrimitivesInterop.LogValueAndType(true);
+        PrimitivesInterop.LogValueAndType(0x3A);// byte literal
+        PrimitivesInterop.LogValueAndType('C');
+        PrimitivesInterop.LogValueAndType((Int16)12);
         // Note: JavaScript Number has a lower max value and can generate overflow errors
-        PrimitivesProxy.LogValueAndTypeForNumber(9007199254740990L);// Int64/Long 
-        PrimitivesProxy.LogValueAndTypeForBigInt(1234567890123456789L);// Int64/Long, JS BigInt supports larger numbers
-        PrimitivesProxy.LogValueAndType(3.14f);// single floating point literal
-        PrimitivesProxy.LogValueAndType(3.14d);// double floating point literal
-        PrimitivesProxy.LogValueAndType("A string");
+        PrimitivesInterop.LogValueAndTypeForNumber(9007199254740990L);// Int64/Long 
+        PrimitivesInterop.LogValueAndTypeForBigInt(1234567890123456789L);// Int64/Long, JS BigInt supports larger numbers
+        PrimitivesInterop.LogValueAndType(3.14f);// single floating point literal
+        PrimitivesInterop.LogValueAndType(3.14d);// double floating point literal
+        PrimitivesInterop.LogValueAndType("A string");
     }
 }
 // The example displays the following output in the browser's debug console:
@@ -264,7 +264,7 @@ export { DateShim };
 using System.Runtime.InteropServices.JavaScript;
 using System.Threading.Tasks;
 
-public partial class DateProxy
+public partial class DateInterop
 {   
     [JSImport("DateShim.IncrementDay", "DateShim")]
     [return: JSMarshalAs<JSType.Date>] // Explicit JSMarshalAs for a return type.
@@ -284,9 +284,9 @@ public static class DateUsage
 
         // Basic examples of interop with a C# DateTime and JS Date:
         DateTime date = new DateTime(1968, 12, 21, 12, 51, 0, DateTimeKind.Utc);            
-        DateProxy.LogValueAndType(date);
-        date = DateProxy.IncrementDay(date);        
-        DateProxy.LogValueAndType(date);
+        DateInterop.LogValueAndType(date);
+        date = DateInterop.IncrementDay(date);        
+        DateInterop.LogValueAndType(date);
     }
 }
 // The example displays the following output in the browser's debug console:
@@ -336,7 +336,7 @@ using System;
 using System.Runtime.InteropServices.JavaScript;
 using System.Threading.Tasks;
 
-public partial class JSObjectProxy
+public partial class JSObjectInterop
 {
     [JSImport("JSObjectShim.CreateObject", "JSObjectShim")]
     public static partial JSObject CreateObject();
@@ -358,19 +358,19 @@ public static class JSObjectUsage
     {
         await JSHost.ImportAsync("JSObjectShim", "/JSObjectShim.js");
 
-        JSObject jsObject = JSObjectProxy.CreateObject();
-        JSObjectProxy.ConsoleLog(jsObject);
-        JSObjectProxy.IncrementAnswer(jsObject);
+        JSObject jsObject = JSObjectInterop.CreateObject();
+        JSObjectInterop.ConsoleLog(jsObject);
+        JSObjectInterop.IncrementAnswer(jsObject);
         // Note: We did not retrieve an updated object, and will see the change reflected in our existing instance.
-        JSObjectProxy.ConsoleLog(jsObject);
+        JSObjectInterop.ConsoleLog(jsObject);
 
         // JSObject exposes several methods for interacting with properties:
         jsObject.SetProperty("question", "What is the answer?");
-        JSObjectProxy.ConsoleLog(jsObject);
+        JSObjectInterop.ConsoleLog(jsObject);
 
         // We can't directly JSImport an instance method on the jsObject, but we can
         // pass the object reference and have the JS shim call the instance method.
-        string summary = JSObjectProxy.Summarize(jsObject);
+        string summary = JSObjectInterop.Summarize(jsObject);
         Console.WriteLine("Summary: " + summary);
 
     }
@@ -462,7 +462,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices.JavaScript;
 using System.Threading.Tasks;
 
-public partial class PromisesProxy
+public partial class PromisesInterop
 {
     // Do not use the async keyword in the C# method signature. Returning Task or Task<T> is sufficient.
 
@@ -504,28 +504,28 @@ public static class PromisesUsage
         Stopwatch sw = new Stopwatch();
         sw.Start();
 
-        await PromisesProxy.Wait2Seconds();// await promise
+        await PromisesInterop.Wait2Seconds();// await promise
         Console.WriteLine($"Waited {sw.Elapsed.TotalSeconds:#.0} seconds.");
 
         sw.Restart();
-        string str = await PromisesProxy.WaitGetString();// await promise with string return
+        string str = await PromisesInterop.WaitGetString();// await promise with string return
         Console.WriteLine($"Waited {sw.Elapsed.TotalSeconds:#.0} seconds for WaitGetString: '{str}'");
 
         sw.Restart();
-        DateTime date = await PromisesProxy.WaitGetDate();// await promise with string return
+        DateTime date = await PromisesInterop.WaitGetDate();// await promise with string return
         Console.WriteLine($"Waited {sw.Elapsed.TotalSeconds:#.0} seconds for WaitGetDate: '{date}'");
 
-        string responseText = await PromisesProxy.FetchCurrentUrl();// await a JS fetch        
+        string responseText = await PromisesInterop.FetchCurrentUrl();// await a JS fetch        
         Console.WriteLine($"responseText.Length: {responseText.Length}");
                 
         sw.Restart();
 
-        await PromisesProxy.AsyncFunction();// await an async JS method
+        await PromisesInterop.AsyncFunction();// await an async JS method
         Console.WriteLine($"Waited {sw.Elapsed.TotalSeconds:#.0} seconds for AsyncFunction.");
 
         try {
             // Handle a promise rejection
-            await PromisesProxy.ConditionalSuccess(shouldSucceed: false);// await an async JS method            
+            await PromisesInterop.ConditionalSuccess(shouldSucceed: false);// await an async JS method            
         }
         catch(JSException ex) // Catch javascript exception
         {
@@ -632,7 +632,7 @@ using System;
 using System.Runtime.InteropServices.JavaScript;
 using System.Threading.Tasks;
 
-public partial class EventsProxy
+public partial class EventsInterop
 {
     [JSImport("EventsShim.SubscribeEventById", "EventsShim")]
     public static partial JSObject SubscriveEventById(string elementId, string eventName, 
@@ -667,19 +667,19 @@ public static class EventsUsage
         Action<string, string> listenerFunc = (eventName, elementId) =>
             Console.WriteLine($"In C# event listener: Event {eventName} from ID {elementId}");
         
-        JSObject listenerHandler1 = EventsProxy.SubscriveEventById("btn1", "click", listenerFunc);
-        JSObject listenerHandler2 = EventsProxy.SubscriveEventById("btn2", "click", listenerFunc);
+        JSObject listenerHandler1 = EventsInterop.SubscriveEventById("btn1", "click", listenerFunc);
+        JSObject listenerHandler2 = EventsInterop.SubscriveEventById("btn2", "click", listenerFunc);
         Console.WriteLine("Subscribed to btn1 & 2.");
-        EventsProxy.TriggerClick("btn1");
-        EventsProxy.TriggerClick("btn2");
+        EventsInterop.TriggerClick("btn1");
+        EventsInterop.TriggerClick("btn2");
 
-        EventsProxy.UnsubscriveEventById("btn2", "click", listenerHandler2);
+        EventsInterop.UnsubscriveEventById("btn2", "click", listenerHandler2);
         Console.WriteLine("Unsubscribed btn2.");
-        EventsProxy.TriggerClick("btn1");
-        EventsProxy.TriggerClick("btn2");// Doesn't trigger because unsubscribed
-        EventsProxy.UnsubscriveEventById("btn1", "click", listenerHandler1);
+        EventsInterop.TriggerClick("btn1");
+        EventsInterop.TriggerClick("btn2");// Doesn't trigger because unsubscribed
+        EventsInterop.UnsubscriveEventById("btn1", "click", listenerHandler1);
         // Pitfall: Using a different handler for unsubscribe will silently fail.
-        // EventsProxy.UnsubscriveEventById("btn1", "click", listenerHandler2); 
+        // EventsInterop.UnsubscriveEventById("btn1", "click", listenerHandler2); 
         
 
         // With JSObject as event target and event object
@@ -690,13 +690,13 @@ public static class EventsUsage
             Console.WriteLine($"In C# event listener: Event {eventType} from ID {target.GetPropertyAsString("id")}");
         };
 
-        JSObject htmlElement = EventsProxy.GetElementById("btn1");
-        JSObject listenerHandler3 = EventsProxy.SubscribeEvent(htmlElement, "click", listenerFuncForElement);
+        JSObject htmlElement = EventsInterop.GetElementById("btn1");
+        JSObject listenerHandler3 = EventsInterop.SubscribeEvent(htmlElement, "click", listenerFuncForElement);
         Console.WriteLine("Subscribed to btn1.");
-        EventsProxy.TriggerClick("btn1");
-        EventsProxy.UnsubscribeEvent(htmlElement, "click", listenerHandler3);
+        EventsInterop.TriggerClick("btn1");
+        EventsInterop.UnsubscribeEvent(htmlElement, "click", listenerHandler3);
         Console.WriteLine("Unsubscribed btn1.");
-        EventsProxy.TriggerClick("btn1");
+        EventsInterop.TriggerClick("btn1");
 
     }
     // The example displays the following output in the browser's debug console:
@@ -748,8 +748,8 @@ Some type mappings requiring nested generic types in the `JSMarshalAs` definitio
     //...
 
     // Usage from Program.cs Main():
-    JSObject arrayAsJSObject = await PromisesProxy.WaitGetIntArrayAsObject();          
-    int[] intArray = PromisesProxy.UnwrapJSObjectAsIntArray(arrayAsJSObject);
+    JSObject arrayAsJSObject = await PromisesInterop.WaitGetIntArrayAsObject();          
+    int[] intArray = PromisesInterop.UnwrapJSObjectAsIntArray(arrayAsJSObject);
 ```
 
 
@@ -770,11 +770,11 @@ public static class JSObjectBenchmark
     public static void Run()
     {
         Stopwatch sw = new Stopwatch();
-        var jsObject = JSObjectProxy.CreateObject();
+        var jsObject = JSObjectInterop.CreateObject();
         sw.Start();
         for (int i = 0; i < 1000000; i++)
         {
-            JSObjectProxy.IncrementAnswer(jsObject);
+            JSObjectInterop.IncrementAnswer(jsObject);
         }
         sw.Stop();
         Console.WriteLine($"JS interop elapsed time: {sw.Elapsed.TotalSeconds:#.0000} seconds at {sw.Elapsed.TotalMilliseconds / 1000000d:#.000000} ms per operation");
@@ -793,8 +793,8 @@ public static class JSObjectBenchmark
         sw.Restart();
         for (int i = 0; i < 1000000; i++)
         {
-            var jsObject2 = JSObjectProxy.CreateObject();
-            JSObjectProxy.IncrementAnswer(jsObject2);
+            var jsObject2 = JSObjectInterop.CreateObject();
+            JSObjectInterop.IncrementAnswer(jsObject2);
         }
         sw.Stop();
         Console.WriteLine($"JS interop elapsed time: {sw.Elapsed.TotalSeconds:#.0000} seconds at {sw.Elapsed.TotalMilliseconds / 1000000d:#.000000} ms per operation");
