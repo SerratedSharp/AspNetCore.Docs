@@ -235,7 +235,9 @@ public static class PrimitivesUsage
 
 ## JS Date
 
-Demonstrates JSImport of methods which have a JS Date object as its return or parameter.
+Demonstrates JSImport of methods which have a JS Date object as its return or parameter.  Dates are marshalled across interop by-value, meaning they are copied in much the same way as JS primitives.
+
+Be aware that JS Date objects do not contain timezone information and are internally represented in UTC.  To ensure a reliable conversion when marshalling to JavaScript, a .NET DateTime should be initialized with DateTimeKind.Utc or DateTimeKind.Local, avoiding DateTimeKind.Unspecified.  Consider a scenario where the local environment's timezone is EST. If you pass the DateTime `new DateTime(1968, 12, 21, 7, 51, 0, DateTimeKind.Local)` to JavaScript and it were later returned back to .NET, then it will have DateTimeKind.Utc with the time adjusted to 12:51 PM UTC.  Although the original DateTimeKind was changed, the time is adjusted correctly.
 
 ```JS
 // DateShim.js
