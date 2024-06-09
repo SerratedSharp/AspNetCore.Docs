@@ -580,48 +580,28 @@ let EventsShim = {};
         elementObj.click();
     }
 
-
     EventsShim.GetElementById = function (elementId) {
         return document.getElementById(elementId);
     }
 
-    EventsShim.SubscribeEvent = function (elementObj, eventName, listenerFunc) {
-        // Need to wrap the Managed C# action in JS func
+    EventsShim.SubscribeEvent = function (elementObj, eventName, listenerFunc) {        
         let handler = function (e) {
             listenerFunc(e);
         }.bind(elementObj);
 
         elementObj.addEventListener(eventName, handler, false);
-        return handler;// return JSObject reference so it can be used for removeEventListener later
+        return handler;
     }
 
     EventsShim.UnsubscribeEvent = function (elementObj, eventName, listenerHandler) {        
         return elementObj.removeEventListener(eventName, listenerHandler, false);
     }
 
-    // TODO: Move to troubleshooting
     EventsShim.SubscribeEventFailure = function (elementObj, eventName, listenerFunc) {
         // It's not strictly required to wrap the C# action listenerFunc in a JS function.
         elementObj.addEventListener(eventName, listenerFunc, false);
         // However, if you need to return the wrapped proxy object you will get an error when it tries to wrap the existing proxy in an additional proxy:
         return listenerFunc; // Error: "JSObject proxy of ManagedObject proxy is not supported."
-    }
-
-    EventsShim.SubscribeEventByIdWithLogging = function (elementId, eventName, listenerFunc) {
-
-        console.log("Begin");
-        const elementObj = document.getElementById(elementId);
-        console.log("elementObj:", elementObj);
-        // Need to wrap the Managed C# action in JS func (only because it is being returned)
-        let handler = function (event) {
-            console.log(event);
-            listenerFunc(event.type, event.target.id);// decompose object to primitives
-        }.bind(elementObj);
-        console.log(handler);
-
-        elementObj.addEventListener(eventName, handler, false);
-        console.log("done");
-        return handler;// return JSObject reference so it can be used for removeEventListener later
     }
     
 })(EventsShim);
@@ -681,8 +661,7 @@ public static class EventsUsage
         EventsInterop.TriggerClick("btn2");// Doesn't trigger because unsubscribed
         EventsInterop.UnsubscriveEventById("btn1", "click", listenerHandler1);
         // Pitfall: Using a different handler for unsubscribe will silently fail.
-        // EventsInterop.UnsubscriveEventById("btn1", "click", listenerHandler2); 
-        
+        // EventsInterop.UnsubscriveEventById("btn1", "click", listenerHandler2);         
 
         // With JSObject as event target and event object
         Action<JSObject> listenerFuncForElement = (eventObj) =>
