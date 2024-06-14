@@ -1,9 +1,9 @@
 
 # Interoperate with JavaScript from .NET WebAssembly
 
-This article explains how to use the API in the System.Runtime.InteropServices.JavaScript namespace to interact with JavaScript (JS) from client-side WebAssembly components that adopt .NET 7 or later.  This API is colloquially referred to as JSImport/JSExport interop, so named for the two most common attributes used to define desired interop.  
+Learn how to interact with JavaScript (JS) from client-side WebAssembly (WASM) components by using the System.Runtime.InteropServices.JavaScript API within .NET 7 or later. This API is colloquially referred to as JSImport/JSExport interop, so named for the two most common attributes used to define desired interop. 
 
-This approach is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser.  These scenarios include either Blazor WebAssembly client-side components as detailed in [JavaScript interop with ASP.NET Core Blazor](../blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport.  See the respective articles for examples specialized for these platforms.
+This approach is applicable when running a .NET WebAssembly module in a JavaScript host such as a browser. These scenarios include either Blazor WebAssembly client-side components as detailed in [JavaScript interop with ASP.NET Core Blazor](../blazor/js-interop/import-export-interop), non-Blazor .NET WebAssembly apps detailed in [Run .NET from JavaScript](dotnet-interop.md), and other .NET WebAssembly platforms which support JSImport/JSExport. See the respective articles for examples specialized for these platforms.
 
 ## Prerequisites 
 
@@ -18,13 +18,13 @@ A project using either one of the following project types:
 This isn't an exhaustive list, as other commercial and/or open-source platforms exist which enable compiling .NET code to WebAssembly and support code using `System.Runtime.InteropServices.JavaScript`.
 
 # JS Interop using JSImport/JSExport
-The JSImport attribute is applied to a .NET method to indicate that a corresponding JavaScript method should be called when the .NET method is called.  This allows .NET developers to define "imports" that enable .NET code to call into JavaScript.  Additionally, .NET Actions can be passed as parameters and JavaScript can invoke these .NET actions to support callback or event subscription patterns.
+The JSImport attribute is applied to a .NET method to indicate that a corresponding JavaScript method should be called when the .NET method is called. This allows .NET developers to define "imports" that enable .NET code to call into JavaScript. Additionally, .NET Actions can be passed as parameters and JavaScript can invoke these .NET actions to support callback or event subscription patterns.
 
-The JSExport attribute is applied to a .NET method to expose it to JavaScript code.  This allows JavaScript code to initiate calls to the .NET method.
+The JSExport attribute is applied to a .NET method to expose it to JavaScript code. This allows JavaScript code to initiate calls to the .NET method.
 
 ## Importing JS Methods
 
-This example imports an existing static JS method into C#.  JSImport is limited to importing static methods or instance methods of objects accessible globally.  For example, `.log()` strictly speaking is an instance method of the `console` object, but can be accessed using static semantics since the instance is a globally accessible singleton.
+This example imports an existing static JS method into C#. JSImport is limited to importing static methods or instance methods of objects accessible globally. For example, `.log()` strictly speaking is an instance method of the `console` object, but can be accessed using static semantics since the instance is a globally accessible singleton.
 
 ```C#
 public partial class GlobalInterop
@@ -61,41 +61,41 @@ public partial class GlobalInterop
 GlobalInterop.CallAlert("Hello World");
 ```
 
-Note that the C# class declaring the JSImport method does not have an implementation.  At compile time a source generated partial class will contain the .NET code which implements the marshalling of the call and types to invoke the corresponding JavaScript.  In Visual Studio, using the Go To Definition or Go To Implementation options will respectively navigate to either the source generated partial class or the developer defined partial class.
+Note that the C# class declaring the JSImport method does not have an implementation. At compile time a source generated partial class will contain the .NET code which implements the marshalling of the call and types to invoke the corresponding JavaScript. In Visual Studio, using the Go To Definition or Go To Implementation options will respectively navigate to either the source generated partial class or the developer defined partial class.
 
-In this example, the intermediate `globalThis.callAlert` JavaScript declaration was used to wrap existing JavaScript. This article informally refers to the intermediate JavaScript declaration as a JS shim.  In this case it can "shim" or fill the gap between the .NET implementation and existing JS capabilities/libraries.  In many cases, such as this trivial example, the JS shim is not necessary and methods could be imported directly as is done in the ConsoleLog example.  As demonstrated later, sometimes a JS shim can serve to encapsulate additional logic, manually map types, reduce the number of objects or calls crossing the interop boundary, and/or manually map static calls to instance methods.
+In this example, the intermediate `globalThis.callAlert` JavaScript declaration was used to wrap existing JavaScript. This article informally refers to the intermediate JavaScript declaration as a JS shim. In this case it can "shim" or fill the gap between the .NET implementation and existing JS capabilities/libraries. In many cases, such as this trivial example, the JS shim is not necessary and methods could be imported directly as is done in the ConsoleLog example. As demonstrated later, sometimes a JS shim can serve to encapsulate additional logic, manually map types, reduce the number of objects or calls crossing the interop boundary, and/or manually map static calls to instance methods.
 
 ## Loading JavaScript Declarations
 
-JavaScript declarations which are intended to be imported with JSImport would typically be loaded in the context of the same webpage or JavaScript host which loaded the .NET WebAssembly.   This could be accomplished by:
+JavaScript declarations which are intended to be imported with JSImport would typically be loaded in the context of the same webpage or JavaScript host which loaded the .NET WebAssembly. This could be accomplished by:
 - A `<script>...</script>` tag declaring traditional JavaScript inline
 - A `<script src='./some.js'>` tag loading a traditional external *.js file
 - Loading a JavaScript ES6 module using `<script type='module' src="./moduleName.js"></script>` tag on the page
 - Loading a JavaScript ES6 module *.js file by using `JSHost.ImportAsync(...)` from the .NET WebAssembly
 
-Examples in this article use `JSHost.ImportAsync(...)`.  When calling `JShost.ImportAsync(...)`, the client-side .NET WebAssembly will request the file using the `moduleUrl` parameter, and thus expects the file to be accessible as a static web asset much the same way as a `<script>` tag would retrieve a file with a `src` URL.  For example, if using the following C# code within a WebAssembly Browser App project, then the *.js file would be placed inside the project under `/wwwroot/scripts/ExampleShim.js`:
+Examples in this article use `JSHost.ImportAsync(...)`. When calling `JShost.ImportAsync(...)`, the client-side .NET WebAssembly will request the file using the `moduleUrl` parameter, and thus expects the file to be accessible as a static web asset much the same way as a `<script>` tag would retrieve a file with a `src` URL. For example, if using the following C# code within a WebAssembly Browser App project, then the *.js file would be placed inside the project under `/wwwroot/scripts/ExampleShim.js`:
 
 ```C#
 await JSHost.ImportAsync("ExampleShim", "/scripts/ExampleShim.js");
 ```
 
-Note that depending on the platform loading the WebAssembly, a dot prefixed URL such as `./scripts/` might refer to an incorrect subdirectory such as `/_framework/scripts/` because the WebAssembly package is initialized by framework scripts under `/_framework/`.  In that case prefixing the URL with `../scripts/` would refer to the correct path, or prefixing `/scripts/` would work only if the site is hosted at the root of the domain.  A generic approach would typically involve configuring the correct base path for the given environment with an HTML `<base>` tag and using the `/scripts/` prefix to refer to the path relative to the base path.  Tilde notation `~/` prefixes are not supported by `ImportAsync()`.
+Note that depending on the platform loading the WebAssembly, a dot prefixed URL such as `./scripts/` might refer to an incorrect subdirectory such as `/_framework/scripts/` because the WebAssembly package is initialized by framework scripts under `/_framework/`. In that case prefixing the URL with `../scripts/` would refer to the correct path, or prefixing `/scripts/` would work only if the site is hosted at the root of the domain. A generic approach would typically involve configuring the correct base path for the given environment with an HTML `<base>` tag and using the `/scripts/` prefix to refer to the path relative to the base path. Tilde notation `~/` prefixes are not supported by `ImportAsync()`.
 
 > [!IMPORTANT] 
-> If JavaScript is loaded from an ES6 module, then JSImport attributes must include the module name as the second parameter.  For example, `[JSImport("globalThis.callAlert", "ExampleShim")]` would indicate the imported method was declared in an ES6 module named "ExampleShim".
+> If JavaScript is loaded from an ES6 module, then JSImport attributes must include the module name as the second parameter. For example, `[JSImport("globalThis.callAlert", "ExampleShim")]` would indicate the imported method was declared in an ES6 module named "ExampleShim".
 
 ## Type Mappings
 
-Parameters and returns types in the .NET method signature will automatically be converted to/from appropriate JS types at runtime if a unique mapping is supported.  This may result in values being converted by value, or references being wrapped in a proxy type. This process is known as type marshalling. Use <xref:System.Runtime.InteropServices.JavaScript.JSMarshalAsAttribute%601> to control how the imported method parameters and return types are marshalled. 
+Parameters and returns types in the .NET method signature will automatically be converted to/from appropriate JS types at runtime if a unique mapping is supported. This may result in values being converted by value, or references being wrapped in a proxy type. This process is known as type marshalling. Use <xref:System.Runtime.InteropServices.JavaScript.JSMarshalAsAttribute%601> to control how the imported method parameters and return types are marshalled. 
 
-Some types do not have a default type mapping.  For example, a `long` can be marshalled as <xref:System.Runtime.InteropServices.JavaScript.JSType.Number?displayProperty=nameWithType> or <xref:System.Runtime.InteropServices.JavaScript.JSType.BigInt?displayProperty=nameWithType> and thus the `[JSMarsalAsAttibute]` is required or a compile time error will be generated.  
+Some types do not have a default type mapping. For example, a `long` can be marshalled as <xref:System.Runtime.InteropServices.JavaScript.JSType.Number?displayProperty=nameWithType> or <xref:System.Runtime.InteropServices.JavaScript.JSType.BigInt?displayProperty=nameWithType> and thus the `[JSMarsalAsAttibute]` is required or a compile time error will be generated. 
 
 Of note is support for the following type mapping scenarios:
 - An <xref:System.Action> or <xref:System.Func%601> can be passed as parameters and are marshalled as callable JS functions. This allows .NET code to provide listeners to be invoked in response to JS callbacks or events.
 - JS references and .NET managed object references can be passed in either direction, are marshaled as proxy objects, and are kept alive across the boundary until the proxy is garbage collected.
 - Asynchronous JS methods or [JS promises](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise) are marshalled with a <xref:System.Threading.Tasks.Task> result and vice versa. 
 
-Most of the marshalled types work in both directions, as parameters and as return values, on both imported and exported methods.  
+Most of the marshalled types work in both directions, as parameters and as return values, on both imported and exported methods. 
 
 The following table details supported type mappings:
 
@@ -111,7 +111,7 @@ The following table details supported type mappings:
 
 :::moniker-end
 
-Note, some combinations of type mappings that require nested generic types in `JSMarshalAs` are not currently supported.  For example, attempting to materialize an array from a JS promise such as `[return: JSMarshalAs<JSType.Promise<JSType.Array<JSType.Number>>>()]` will generate a compile time error.  An appropriate workaround will vary depending on the scenario, but this specific scenario explored in the [Type Mapping Limitations](#type-mapping-limitations)] section.
+Note, some combinations of type mappings that require nested generic types in `JSMarshalAs` are not currently supported. For example, attempting to materialize an array from a JS promise such as `[return: JSMarshalAs<JSType.Promise<JSType.Array<JSType.Number>>>()]` will generate a compile time error. An appropriate workaround will vary depending on the scenario, but this specific scenario explored in the [Type Mapping Limitations](#type-mapping-limitations)] section.
 
 ## JS Primitives
 
@@ -134,7 +134,7 @@ let PrimitivesShim = {};
     // Identical with more verbose syntax:
     //Primitives.GetCounter = function () { return counter; };
 
-    // Takes a parameter and returns nothing.  JS doesn't restrict the parameter type, but we can restrict it in the .NET proxy if desired.
+    // Takes a parameter and returns nothing. JS doesn't restrict the parameter type, but we can restrict it in the .NET proxy if desired.
     PrimitivesShim.LogValue = (value) => { console.log(value); };
 
     // Called for various .NET types to demonstrate mapping to JS primitive types
@@ -235,9 +235,9 @@ public static class PrimitivesUsage
 
 ## JS Date
 
-Demonstrates JSImport of methods which have a JS Date object as its return or parameter.  Dates are marshalled across interop by-value, meaning they are copied in much the same way as JS primitives.
+Demonstrates JSImport of methods which have a JS Date object as its return or parameter. Dates are marshalled across interop by-value, meaning they are copied in much the same way as JS primitives.
 
-Be aware that a [JS Date](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) is time-zone agnostic.   A .NET DateTime will be adjusted relative to its DateTimeKind when marshalled, but time zone information will not be preserved.  Consider initializing DateTime's with a DateTimeKind.Utc or DateTimeKind.Local consistent with the value it represents.
+Be aware that a [JS Date](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) is time-zone agnostic. A .NET DateTime will be adjusted relative to its DateTimeKind when marshalled, but time zone information will not be preserved. Consider initializing DateTime's with a DateTimeKind.Utc or DateTimeKind.Local consistent with the value it represents.
 
 ```JS
 // DateShim.js
@@ -298,9 +298,9 @@ public static class DateUsage
 
 ## JS Object References
 
-Whenever a JS method returns an object reference, it is represented in .NET with the JSObject type.  The original JS object continues its lifetime within the JS boundary, while .NET code can access and modify it by reference through the JSObject.  While the type itself exposes a limited API, the ability to hold a JS object reference as well as return or pass it across the interop boundary enables a great deal of capabilities.
+Whenever a JS method returns an object reference, it is represented in .NET with the JSObject type. The original JS object continues its lifetime within the JS boundary, while .NET code can access and modify it by reference through the JSObject. While the type itself exposes a limited API, the ability to hold a JS object reference as well as return or pass it across the interop boundary enables a great deal of capabilities.
 
-The JSObject provides methods to access properties, but does not provide direct access to instance methods.  As the `Summarize()` method demonstrates below, instance methods can be accessed indirectly by implementing a static method that takes the instance to be acted on as a parameter.
+The JSObject provides methods to access properties, but does not provide direct access to instance methods. As the `Summarize()` method demonstrates below, instance methods can be accessed indirectly by implementing a static method that takes the instance to be acted on as a parameter.
 
 ```JS
 // JSObjectShim.js
@@ -386,11 +386,11 @@ public static class JSObjectUsage
 
 ## Asynchronous Interop
 
-Many JavaScript APIs are asynchronous and signal completion through either a callback, promise, or async method.  Ignoring asynchronous capabilities is often not an option, as subsequent code may depend upon the completion of the asynchronous operation, and thus must be awaited.
+Many JavaScript APIs are asynchronous and signal completion through either a callback, promise, or async method. Ignoring asynchronous capabilities is often not an option, as subsequent code may depend upon the completion of the asynchronous operation, and thus must be awaited.
 
-JS methods using the `async` keyword or returning a promise can be awaited in C# by a method returning a Task.  Note as demonstrated below, the `async` keyword is not used on the C# method with the JSImport attribute, because it does not use the `await` keyword within it.  However, consuming code calling the method would typically use the `await` keyword and be marked as `async` as demonstrated in the `PromisesUsage` example.
+JS methods using the `async` keyword or returning a promise can be awaited in C# by a method returning a Task. Note as demonstrated below, the `async` keyword is not used on the C# method with the JSImport attribute, because it does not use the `await` keyword within it. However, consuming code calling the method would typically use the `await` keyword and be marked as `async` as demonstrated in the `PromisesUsage` example.
 
-JavaScript with a callback, such as a `setTimeout()`, can be wrapped in a Promise before returning from JavaScript.  Wrapping a callback in a promise as demonstrated in `Wait2Seconds()` is only appropriate when the callback is called exactly once.  Otherwise, a C# Action can be passed to listen for a callback that may be called zero or many times, which is demonstrated in [Subscribing to JS Events](#Subscribing-to-JS-Events).
+JavaScript with a callback, such as a `setTimeout()`, can be wrapped in a Promise before returning from JavaScript. Wrapping a callback in a promise as demonstrated in `Wait2Seconds()` is only appropriate when the callback is called exactly once. Otherwise, a C# Action can be passed to listen for a callback that may be called zero or many times, which is demonstrated in [Subscribing to JS Events](#Subscribing-to-JS-Events).
 
 ```JS
 // PromisesShim.js
@@ -398,7 +398,7 @@ let PromisesShim = {};
 (function (PromisesShim) {
 
     PromisesShim.Wait2Seconds = function () {
-        // This also demonstrates wrapping a callback-based API in a promise to make it awaitable.        
+        // This also demonstrates wrapping a callback-based API in a promise to make it awaitable.
         return new Promise((resolve, reject) => {
             setTimeout(() => {                
                 resolve();// resolve promise after 2 seconds
@@ -529,7 +529,7 @@ public static class PromisesUsage
             // Handle a promise rejection
             await PromisesInterop.ConditionalSuccess(shouldSucceed: false);// await an async JS method            
         }
-        catch(JSException ex) // Catch javascript exception
+        catch(JSException ex) // Catch JavaScript exception
         {
             Console.WriteLine($"JavaScript Exception Caught: '{ex.Message}'");
         }       
@@ -548,9 +548,9 @@ public static class PromisesUsage
 
 ## Subscribing to JS Events
 
-.NET code can subscribe to and handle JS events by passing a C# Action to a JS method to act as a handler.  The JS shim code handles subscribing to the event.
+.NET code can subscribe to and handle JS events by passing a C# Action to a JS method to act as a handler. The JS shim code handles subscribing to the event.
 
-One nuance of `removeEventListener()` is it requires a reference to the function previously passed to `addEventListener()`.  When a C# Action is passed across the interop boundary, it gets wrapped in a JS proxy object.  The consequence of this is when passing the same C# Action to both `addEventListener` and `removeEventListener`, two different JS proxy objects wrapping the Action will be generated.  These references are different, thus `removeEventListener` will not be able to find the event listener to remove.  To address this problem, the following examples wrap the C# Action in a JS function, then return that reference as a JSObject from the subscribe call to be passed later to the unsubscribe call.  Because it is returned and passed as a JSObject, the same reference is used for both calls, and the event listener can be removed.
+One nuance of `removeEventListener()` is it requires a reference to the function previously passed to `addEventListener()`. When a C# Action is passed across the interop boundary, it gets wrapped in a JS proxy object. The consequence of this is when passing the same C# Action to both `addEventListener` and `removeEventListener`, two different JS proxy objects wrapping the Action will be generated. These references are different, thus `removeEventListener` will not be able to find the event listener to remove. To address this problem, the following examples wrap the C# Action in a JS function, then return that reference as a JSObject from the subscribe call to be passed later to the unsubscribe call. Because it is returned and passed as a JSObject, the same reference is used for both calls, and the event listener can be removed.
 
 ```JS
 // EventsShim.js
@@ -694,7 +694,7 @@ public static class EventsUsage
 
 # Type Mapping Limitations
 
-Some type mappings requiring nested generic types in the `JSMarshalAs` definition are not currently supported.  For example, returning a JS promise for an array such as `[return: JSMarshalAs<JSType.Promise<JSType.Array<JSType.Number>>>()]` will generate a compile time error.  An appropriate workaround will vary depending on the scenario, but one option is to represent the array as a JSObject reference.  This may be sufficient if accessing individual elements within .NET is not necessary, and the reference can be passed to other JS methods which act on the array.  Alternatively, a dedicated method can take the JSObject reference as a parameter and return the materialized array as demonstrated by UnwrapJSObjectAsIntArray.  Note in this case the JS method has no type checking, and it's the developer's responsibility to ensure a JSObject wrapping the appropriate array type is passed.
+Some type mappings requiring nested generic types in the `JSMarshalAs` definition are not currently supported. For example, returning a JS promise for an array such as `[return: JSMarshalAs<JSType.Promise<JSType.Array<JSType.Number>>>()]` will generate a compile time error. An appropriate workaround will vary depending on the scenario, but one option is to represent the array as a JSObject reference. This may be sufficient if accessing individual elements within .NET is not necessary, and the reference can be passed to other JS methods which act on the array. Alternatively, a dedicated method can take the JSObject reference as a parameter and return the materialized array as demonstrated by UnwrapJSObjectAsIntArray. Note in this case the JS method has no type checking, and it's the developer's responsibility to ensure a JSObject wrapping the appropriate array type is passed.
 
 ```JS
     PromisesShim.WaitGetIntArrayAsObject = function () {
@@ -738,9 +738,9 @@ Some type mappings requiring nested generic types in the `JSMarshalAs` definitio
 
 Marshalling of calls and the overhead of tracking objects across the interop boundary is more expensive than native .NET operations, but for moderate usage should still demonstrate acceptable performance for a typical web application.
 
-Object proxies such as JSObject which maintain references across the interop boundary have additional memory overhead, and impact how garbage collection affects these objects.  Additionally, since memory pressure from JavaScript and .NET is not shared, it is possible in some scenarios to exhaust available memory without a garbage collection being triggered.  This risk is significant when an excessive number of large objects are referenced across interop by relatively small JSObject's, or vice versa where large .NET objects are referenced by JS proxies.  In such cases it is advisable to follow deterministic disposal patterns with `using` scopes leveraging JSObject's `IDisposable` interface.
+Object proxies such as JSObject which maintain references across the interop boundary have additional memory overhead, and impact how garbage collection affects these objects. Additionally, since memory pressure from JavaScript and .NET is not shared, it is possible in some scenarios to exhaust available memory without a garbage collection being triggered. This risk is significant when an excessive number of large objects are referenced across interop by relatively small JSObject's, or vice versa where large .NET objects are referenced by JS proxies. In such cases it is advisable to follow deterministic disposal patterns with `using` scopes leveraging JSObject's `IDisposable` interface.
 
-The below benchmarks (leveraging prior example code) demonstrate that interop operations are roughly an order of magnitude slower than those that remain within the .NET boundary, but are still relatively fast.  Additionally, consider that a user's device capabilities will impact performance.
+The below benchmarks (leveraging prior example code) demonstrate that interop operations are roughly an order of magnitude slower than those that remain within the .NET boundary, but are still relatively fast. Additionally, consider that a user's device capabilities will impact performance.
 
 ```C#
 using System;
@@ -805,7 +805,3 @@ public static class JSObjectBenchmark
 // JS interop elapsed time: 2.1686 seconds at .002169 ms per operation
 // .NET elapsed time: .1089 seconds at .000109 ms per operation
 ```
-
-
-
-
