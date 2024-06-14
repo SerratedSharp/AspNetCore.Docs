@@ -10,9 +10,11 @@ uid: client-side/dotnet-interop
 ---
 # Run .NET from JavaScript
 
-This article explains how to run .NET from JavaScript (JS) using JS `[JSImport]`/`[JSExport]` interop.
+This article explains how to setup a WebAssembly Browser App project to run .NET from JavaScript (JS) using JS `[JSImport]`/`[JSExport]` interop.
 
-For additional guidance, see the [Configuring and hosting .NET WebAssembly applications](https://github.com/dotnet/runtime/blob/main/src/mono/wasm/features.md) guidance in the .NET Runtime (`dotnet/runtime`) GitHub repository. We plan to update this article to include new information in the cross-linked guidance in the latter part of 2023 or early 2024.
+See [Interoperate with JavaScript from .NET WebAssembly](xref:client-side/dotnet-js-interop.ms) for additional `[JSImport]`/`[JSExport]` interop details and examples.
+
+For additional guidance on .NET WebAssembly, see the [Configuring and hosting .NET WebAssembly applications](https://github.com/dotnet/runtime/blob/main/src/mono/wasm/features.md) guidance in the .NET Runtime (`dotnet/runtime`) GitHub repository. We plan to update this article to include new information in the cross-linked guidance in the latter part of 2023 or early 2024.
 
 Existing JS apps can use the expanded client-side WebAssembly support in .NET 7 or later to reuse .NET libraries from JS or to build novel .NET-based apps and frameworks.
 
@@ -169,6 +171,8 @@ internal static partial string GetHRef();
 
 In the imported method signature, you can use .NET types for parameters and return values, which are marshalled automatically by the runtime. Use <xref:System.Runtime.InteropServices.JavaScript.JSMarshalAsAttribute%601> to control how the imported method parameters are marshalled. For example, you might choose to marshal a `long` as <xref:System.Runtime.InteropServices.JavaScript.JSType.Number?displayProperty=nameWithType> or <xref:System.Runtime.InteropServices.JavaScript.JSType.BigInt?displayProperty=nameWithType>. You can pass <xref:System.Action>/<xref:System.Func%601> callbacks as parameters, which are marshalled as callable JS functions. You can pass both JS and managed object references, and they are marshaled as proxy objects, keeping the object alive across the boundary until the proxy is garbage collected. You can also import and export asynchronous methods with a <xref:System.Threading.Tasks.Task> result, which are marshaled as [JS promises](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise). Most of the marshalled types work in both directions, as parameters and as return values, on both imported and exported methods.
 
+See [Interoperate with JavaScript from .NET WebAssembly](xref:client-side/dotnet-js-interop.ms#type-mappings) for details on supported type mappings.
+
 [!INCLUDE[](~/blazor/includes/js-interop/7.0/import-export-interop-mappings.md)]
 
 Functions accessible on the global namespace can be imported by using the [`globalThis`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/globalThis) prefix in the function name and by using the `[JSImport]` attribute without providing a module name. In the following example, [`console.log`](https://developer.mozilla.org/docs/Web/API/console/log) is prefixed with `globalThis`. The imported function is called by the C# `Log` method, which accepts a C# string message (`message`) and marshalls the C# string to a JS [`String`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) for `console.log`:
@@ -266,6 +270,7 @@ In the preceding example, the `{TARGET FRAMEWORK}` placeholder is the target fra
 ## Additional resources
 
 * [Configuring and hosting .NET WebAssembly applications](https://github.com/dotnet/runtime/blob/main/src/mono/wasm/features.md)
+* [Interoperate with JavaScript from .NET WebAssembly](xref:client-side/dotnet-js-interop.ms)
 * API documentation
   * [`[JSImport]` attribute](xref:System.Runtime.InteropServices.JavaScript.JSImportAttribute)
   * [`[JSExport]` attribute](xref:System.Runtime.InteropServices.JavaScript.JSExportAttribute)
